@@ -6,6 +6,10 @@
 \usage{
 jsf_available()
 }
+\value{
+A single logical value. \code{TRUE} if \code{jsf} is available, otherwise \code{FALSE}.
+}
 \description{
-Check whether the Python jsf package is available
+This function checks whether the Python \code{jsf} module can be found by
+\code{reticulate} in the currently active Python environment.
 }
