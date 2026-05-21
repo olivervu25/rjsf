@@ -49,3 +49,5 @@ po/*~
 rsconnect/
 .Rproj.user
 .DS_Store
+.venv/
+.DS_Store
