@@ -2,4 +2,5 @@
 
 export(jsf_available)
 export(jsf_lotka_volterra)
+export(jsf_simulate)
 export(jsf_sir)
