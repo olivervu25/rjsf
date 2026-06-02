@@ -1,3 +1,7 @@
 ^rjsf\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.venv$
+^__pycache__$
+^\\.pyc$$
+^dev$
