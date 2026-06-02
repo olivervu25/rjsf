@@ -23,3 +23,33 @@ S7::method(summary, JSFResult) <- function(object, ...) {
   row.names(out) <- NULL
   out
 }
+
+S7::method(plot, JSFResult) <- function(
+    x,
+    y = NULL,
+    ...,
+    main = "JSF simulation result",
+    xlab = "Time",
+    ylab = "Population"
+) {
+  graphics::matplot(
+    x = x@time,
+    y = x@state,
+    type = "l",
+    lty = 1,
+    xlab = xlab,
+    ylab = ylab,
+    main = main,
+    ...
+  )
+
+  graphics::legend(
+    "topright",
+    legend = x@species_names,
+    lty = 1,
+    col = seq_along(x@species_names),
+    bty = "n"
+  )
+
+  invisible(x)
+}
