@@ -19,8 +19,11 @@
 #' @param enforce_do Integer vector controlling enforced discrete behaviour.
 #'   Defaults to zero for all species.
 #' @param method JSF simulation method.
+#'#' @param return_type Output type. Either `"data.frame"` or `"JSFResult"`.
 #'
-#' @return A data frame with a `time` column and one column per species.
+#' @return If `return_type = "data.frame"`, a data frame with a `time` column
+#'   and one column per species. If `return_type = "JSFResult"`, a `JSFResult`
+#'   object.
 #' @export
 jsf_simulate <- function(
     x0,
@@ -33,7 +36,8 @@ jsf_simulate <- function(
     switching_threshold,
     species_names = NULL,
     enforce_do = NULL,
-    method = "operator-splitting"
+    method = "operator-splitting",
+    return_type = c("data.frame", "JSFResult")
 ) {
   if (!jsf_available()) {
     stop(
@@ -44,6 +48,8 @@ jsf_simulate <- function(
   }
 
   n_species <- length(x0)
+
+  return_type <- match.arg(return_type)
 
   if (!is.numeric(dt) || length(dt) != 1 || dt <= 0) {
     stop("`dt` must be a positive numeric scalar.", call. = FALSE)
@@ -145,5 +151,18 @@ jsf_simulate <- function(
   out <- out[out$time <= as.numeric(t_max), ]
   row.names(out) <- NULL
 
-  return(out)
+  if (return_type == "data.frame") {
+    return(out)
+  }
+
+  as_jsf_result(
+    out,
+    method = method,
+    config = list(
+      dt = dt,
+      switching_threshold = switching_threshold,
+      enforce_do = enforce_do,
+      do_disc = do_disc
+    )
+  )
 }

@@ -15,7 +15,8 @@ jsf_simulate(
   switching_threshold,
   species_names = NULL,
   enforce_do = NULL,
-  method = "operator-splitting"
+  method = "operator-splitting",
+  return_type = c("data.frame", "JSFResult")
 )
 }
 \arguments{
@@ -43,7 +44,8 @@ per species.}
 \item{enforce_do}{Integer vector controlling enforced discrete behaviour.
 Defaults to zero for all species.}
 
-\item{method}{JSF simulation method.}
+\item{method}{JSF simulation method.
+#' @param return_type Output type. Either \code{"data.frame"} or \code{"JSFResult"}.}
 }
 \value{
 A data frame with a \code{time} column and one column per species.
