@@ -24,3 +24,15 @@ library(rjsf)
 ## basic example code
 ```
 
+## Setup
+
+1. Install `reticulate`
+2. `py_install(c("python-libsbml", "numpy", "ipykernel"))`
+3. `py_install(
+    "git+https://github.com/DGermano8/jsf.git",
+    envname = "/Users/mlyd0001/.virtualenvs/r-reticulate",
+    method = "virtualenv",
+    pip = TRUE
+    )`
+4. `jsf_available()` should return `TRUE`
+
