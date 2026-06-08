@@ -48,7 +48,9 @@ Defaults to zero for all species.}
 #' @param return_type Output type. Either \code{"data.frame"} or \code{"JSFResult"}.}
 }
 \value{
-A data frame with a \code{time} column and one column per species.
+If \code{return_type = "data.frame"}, a data frame with a \code{time} column
+and one column per species. If \code{return_type = "JSFResult"}, a \code{JSFResult}
+object.
 }
 \description{
 This is a general R wrapper around the Python \code{jsf} simulator.

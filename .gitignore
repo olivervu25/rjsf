@@ -54,3 +54,4 @@ rsconnect/
 .venv
 __pycache__
 *.pyc
+inst/doc
