@@ -27,3 +27,19 @@ A \code{JSFResult} object.
 \description{
 Convert a JSF output data frame to a JSFResult object
 }
+\examples{
+df <- data.frame(
+  time = c(0, 0.1, 0.2),
+  S = c(990, 988, 985),
+  I = c(10, 12, 15),
+  R = c(0, 0, 0)
+)
+
+result <- as_jsf_result(
+  df,
+  config = list(model = "SIR", dt = 0.1)
+)
+
+result
+summary(result)
+}
