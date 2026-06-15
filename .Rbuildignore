@@ -17,3 +17,4 @@
 ^vignettes/articles$
 ^llms\.txt$
 ^_freeze$
+^\.github$
