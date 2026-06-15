@@ -55,3 +55,11 @@ rsconnect/
 __pycache__
 *.pyc
 inst/doc
+
+# qrtdown
+_quarto.yml
+_qrtdown-styles.css
+_qrtdown/
+index.qmd
+/.quarto/
+**/*.quarto_ipynb

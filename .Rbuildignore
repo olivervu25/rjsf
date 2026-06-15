@@ -5,3 +5,15 @@
 ^__pycache__$
 ^\\.pyc$$
 ^dev$
+
+# qrtdown
+^docs$
+^\.quarto$
+^_quarto\.yml$
+^_qrtdown\.yml$
+^_qrtdown-styles\.css$
+^_qrtdown$
+^index\.qmd$
+^vignettes/articles$
+^llms\.txt$
+^_freeze$

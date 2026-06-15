@@ -1,0 +1,11 @@
+bibentry(
+  bibtype = "Manual",
+  title = "{rjsf}: An R Interface to the Jump-Switch-Flow Simulator",
+  author = person(
+    given = "Thanh Long",
+    family = "Vu"
+  ),
+  year = "2026",
+  note = "R package version 0.0.0.9000",
+  url = "https://github.com/olivervu25/rjsf"
+)

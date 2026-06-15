@@ -1,0 +1,24 @@
+url: .na.character
+freeze: auto
+template:
+  theme: cosmo
+  code_overflow: wrap
+  fontsize: 1rem
+  headings:
+    h2: 1.75rem
+    h3: 1.25rem
+    h4: 1.1rem
+    h5: 1rem
+navbar:
+  title: rjsf 0.0.0.9000
+  left:
+  - text: Reference
+    href: _qrtdown/reference.qmd
+  - text: Changelog
+    href: NEWS.md
+  right:
+  - icon: code-square
+    href: .na.character
+    aria-label: Source code
+reference: []
+articles: []
