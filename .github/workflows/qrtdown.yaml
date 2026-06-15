@@ -29,7 +29,7 @@ jobs:
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::qrtdown, local::.
+          extra-packages: github::gadenbuie/qrtdown, local::.
           needs: website
 
       - name: Setup Quarto
