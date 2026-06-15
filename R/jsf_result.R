@@ -1,12 +1,11 @@
 .JSFResultState <- S7::new_S3_class("data.frame")
 
-#' JSF simulation result class
+#' Internal JSF simulation result class
 #'
-#' `JSFResult` stores the output of a JSF simulation in a structured S7 object.
-#' It keeps the time vector, state trajectories, species names, simulation method,
-#' and configuration used to run the simulation.
+#' Objects should normally be created using [new_jsf_result()] or
+#' [as_jsf_result()].
 #'
-#' @export
+#' @noRd
 JSFResult <- S7::new_class(
   "JSFResult",
   properties = list(
