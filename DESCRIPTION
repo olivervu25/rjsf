@@ -1,10 +1,17 @@
 Package: rjsf
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: MIT + file LICENSE
+Authors@R:
+    person(
+      given = "Thanh Long",
+      family = "Vu",
+      email = "longvu2000.work@gmail.com",
+      role = c("aut", "cre")
+    )
+Description: Provides an R interface to the Python 'jsf' package for
+    Jump-Switch-Flow simulation of compartmental reaction models. It supports
+    model definition in R, simulation through 'reticulate', and structured
+    outputs for inspection, summarisation, and plotting.License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
