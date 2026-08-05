@@ -75,6 +75,12 @@ jsf_simulate <- function(
     t_max,
     dt,
     switching_threshold,
+    tau_threshold = NULL,
+    tau_epsilon = 0.03,
+    critical_threshold = 10,
+    tau_debug = FALSE,
+    tau_debug_every = 20,
+    tau_debug_max = 30,
     species_names = NULL,
     enforce_do = NULL,
     method = "operator-splitting",
@@ -166,10 +172,39 @@ jsf_simulate <- function(
     nuProduct = matrix_to_list(product_mat)
   )
 
+  if (is.null(tau_threshold)) {
+    tau_threshold <- switching_threshold
+  }
+
+  if (length(tau_threshold) == 1) {
+    tau_threshold <- rep(tau_threshold, length(x0))
+  }
+
+  if (length(tau_threshold) != n_species) {
+    stop(
+      "`tau_threshold` must be either NULL, a scalar, or have the same length as `x0`.",
+      call. = FALSE
+    )
+  }
+
+  if (!is.numeric(tau_epsilon) || length(tau_epsilon) != 1 || tau_epsilon <= 0) {
+    stop("`tau_epsilon` must be a positive numeric scalar.", call. = FALSE)
+  }
+
+  if (!is.numeric(critical_threshold) || length(critical_threshold) != 1 || critical_threshold < 0) {
+    stop("`critical_threshold` must be a non-negative numeric scalar.", call. = FALSE)
+  }
+
   opts <- list(
     EnforceDo = as.list(as.integer(enforce_do)),
     dt = as.numeric(dt),
-    SwitchingThreshold = as.list(as.numeric(switching_threshold))
+    SwitchingThreshold = as.list(as.numeric(switching_threshold)),
+    TauThreshold = as.list(as.numeric(tau_threshold)),
+    TauEpsilon = as.numeric(tau_epsilon),
+    CriticalThreshold = as.integer(critical_threshold),
+    TauDebug = isTRUE(tau_debug),
+    TauDebugEvery = as.integer(tau_debug_every),
+    TauDebugMax = as.integer(tau_debug_max)
   )
 
   sim <- jsf$jsf(
