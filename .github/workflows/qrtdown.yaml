@@ -38,7 +38,7 @@ jobs:
       - name: Install qrtdown
         shell: Rscript {0}
         run: |
-          pak::pak("git::https://codeberg.org/usrbinr/qrtdown")
+          pak::pak("git::https://codeberg.org/MikeLydeamore/qrtdown")
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
