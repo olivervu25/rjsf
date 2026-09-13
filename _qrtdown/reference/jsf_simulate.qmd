@@ -1,0 +1,116 @@
+---
+title: "jsf_simulate"
+---
+
+[< Back to Reference](../reference.qmd)
+
+# `jsf_simulate()`
+
+Simulate a compartmental model using JSF
+
+## Usage
+
+```r
+jsf_simulate(
+  x0,
+  rates,
+  reactant,
+  product,
+  do_disc,
+  t_max,
+  dt,
+  switching_threshold,
+  tau_threshold = NULL,
+  tau_epsilon = 0.03,
+  critical_threshold = 10,
+  tau_debug = FALSE,
+  tau_debug_every = 20,
+  tau_debug_max = 30,
+  species_names = NULL,
+  enforce_do = NULL,
+  method = "operator-splitting",
+  return_type = c("data.frame", "JSFResult")
+)
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `x0` | Numeric vector of initial states. |
+| `rates` | Python callable rate function, usually created with `reticulate::py_eval()`. |
+| `reactant` | Matrix where each row gives the reactants for one reaction. |
+| `product` | Matrix where each row gives the products for one reaction. |
+| `do_disc` | Integer vector indicating which species may be treated discretely/stochastically. |
+| `t_max` | Final simulation time. |
+| `dt` | Time step for the continuous/ODE part of JSF. |
+| `switching_threshold` | Switching threshold. Can be a scalar or one value per species. |
+| `tau_threshold` | Threshold controlling when species are handled by the tau-leaping component. May be `NULL`, a scalar, or one value per species. If `NULL`, defaults to `switching_threshold`. |
+| `tau_epsilon` | Positive numeric scalar specifying the tau-leaping epsilon parameter passed to the Python JSF backend. |
+| `critical_threshold` | Non-negative numeric scalar specifying the critical-reaction threshold passed to the Python JSF backend. |
+| `tau_debug` | Logical. If `TRUE`, enables diagnostic output from the tau-leaping simulator. |
+| `tau_debug_every` | Integer controlling how often tau-leaping diagnostic information is printed. |
+| `tau_debug_max` | Integer giving the maximum number of tau-leaping diagnostic messages to print. |
+| `species_names` | Optional character vector of species names. |
+| `enforce_do` | Integer vector controlling enforced discrete behaviour. Defaults to zero for all species. |
+| `method` | JSF simulation method. Supported values include `"exact"`, `"operator-splitting"`, and `"tau-operator-splitting"`. |
+| `return_type` | Output type. Either `"data.frame"` or `"JSFResult"`. |
+
+## Value
+
+If `return_type = "data.frame"`, a data frame with a `time` column
+and one column per species. If `return_type = "JSFResult"`, a `JSFResult`
+object.
+
+## Description
+
+This is a general R wrapper around the Python `jsf` simulator.
+It accepts an initial state, a Python rate function, reactant and product
+stoichiometry matrices, and JSF configuration options.
+
+## Examples
+
+```r
+## Not run: 
+library(reticulate)
+
+rates_lv <- reticulate::py_eval(
+  "lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]"
+)
+
+result <- jsf_simulate(
+  x0 = c(prey = 50, predator = 10),
+  rates = rates_lv,
+  reactant = matrix(
+    c(
+      1, 0,
+      0, 1,
+      1, 1
+    ),
+    ncol = 2,
+    byrow = TRUE
+  ),
+  product = matrix(
+    c(
+      2, 0,
+      0, 0,
+      0, 2
+    ),
+    ncol = 2,
+    byrow = TRUE
+  ),
+  do_disc = c(1, 1),
+  t_max = 10,
+  dt = 0.01,
+  switching_threshold = c(30, 30),
+  species_names = c("prey", "predator"),
+  return_type = "JSFResult"
+)
+
+result
+summary(result)
+plot(result)
+
+## End(Not run)
+```
+

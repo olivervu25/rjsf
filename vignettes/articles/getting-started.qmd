@@ -1,0 +1,421 @@
+---
+title: "Getting started with rjsf"
+description: "Set up Python JSF, define compartmental models, and run Jump-Switch-Flow simulations from R."
+toc: true
+toc-depth: 3
+execute:
+  eval: false
+  echo: true
+  warning: false
+  message: false
+---
+
+## Introduction
+
+`rjsf` provides an R interface to the Python `jsf` package for Jump-Switch-Flow simulation.
+
+The main user-facing function is `jsf_simulate()`. It lets users:
+
+1. Define a compartmental reaction model in R.
+2. Pass the model to the Python `jsf` backend through `reticulate`.
+3. Return the simulation output as either:
+
+   * a regular R `data.frame`; or
+   * a structured `JSFResult` object.
+
+A `JSFResult` object supports standard methods such as:
+
+```{r}
+print(result)
+summary(result)
+plot(result)
+```
+
+## Set up Python `jsf`
+
+`rjsf` uses `reticulate` to communicate with Python. The Python `jsf` package must therefore be installed in the same Python environment used by `reticulate`.
+
+One option is to install the dependencies from R:
+
+```{r}
+install.packages("reticulate")
+
+reticulate::virtualenv_create("rjsf-env")
+
+reticulate::py_install(
+  packages = c(
+    "numpy",
+    "python-libsbml",
+    "ipykernel"
+  ),
+  envname = "rjsf-env",
+  method = "virtualenv"
+)
+
+reticulate::py_install(
+  packages = "git+https://github.com/DGermano8/jsf.git",
+  envname = "rjsf-env",
+  method = "virtualenv",
+  pip = TRUE
+)
+
+reticulate::use_virtualenv(
+  "rjsf-env",
+  required = TRUE
+)
+```
+
+You can inspect the Python environment selected by `reticulate` with:
+
+```{r}
+reticulate::py_config()
+```
+
+## Check Python `jsf`
+
+Load `rjsf` and check whether the Python `jsf` module is available:
+
+```{r}
+library(rjsf)
+
+jsf_available()
+```
+
+A correctly configured environment should return:
+
+```text
+[1] TRUE
+```
+
+If it returns `FALSE`, check that:
+
+* Python `jsf` is installed;
+* it is installed in the environment currently used by `reticulate`; and
+* `reticulate::py_config()` reports the expected Python executable.
+
+## Lotka–Volterra predator–prey model
+
+The Lotka–Volterra model describes interactions between two species:
+
+* `prey`;
+* `predator`.
+
+The model contains three reactions:
+
+1. Prey birth: `Prey -> 2 Prey`
+2. Predator death: `Predator -> ∅`
+3. Predation: `Prey + Predator -> 2 Predator`
+
+The state vector is:
+
+```{r}
+x <- c(prey, predator)
+```
+
+### Define the rate function
+
+The Python `jsf` backend expects the rate function to be a Python callable. We create one using `reticulate::py_eval()`:
+
+```{r}
+rates_lv <- reticulate::py_eval(
+  "lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]"
+)
+```
+
+The three rates correspond to:
+
+```text
+2.0 * prey                # prey birth
+1.5 * predator            # predator death
+0.05 * prey * predator    # predation
+```
+
+### Define the stoichiometry
+
+The reactant matrix describes what each reaction consumes:
+
+```{r}
+reactant_lv <- matrix(
+  c(
+    1, 0,
+    0, 1,
+    1, 1
+  ),
+  ncol = 2,
+  byrow = TRUE
+)
+
+reactant_lv
+```
+
+The product matrix describes what each reaction produces:
+
+```{r}
+product_lv <- matrix(
+  c(
+    2, 0,
+    0, 0,
+    0, 2
+  ),
+  ncol = 2,
+  byrow = TRUE
+)
+
+product_lv
+```
+
+Internally, `jsf_simulate()` calculates the net stoichiometry matrix as:
+
+```text
+nu = product - reactant
+```
+
+For this model, the net state changes are:
+
+```text
+Prey -> 2 Prey                 [+1,  0]
+Predator -> ∅                  [ 0, -1]
+Prey + Predator -> 2 Predator  [-1, +1]
+```
+
+### Run the simulation
+
+Run the model and request a `JSFResult` object:
+
+```{r}
+result_lv <- jsf_simulate(
+  x0 = c(prey = 50, predator = 10),
+  rates = rates_lv,
+  reactant = reactant_lv,
+  product = product_lv,
+  do_disc = c(1, 1),
+  t_max = 10,
+  dt = 0.01,
+  switching_threshold = c(30, 30),
+  species_names = c("prey", "predator"),
+  return_type = "JSFResult"
+)
+```
+
+The important arguments are:
+
+* `x0` defines the initial number of prey and predators.
+* `do_disc = c(1, 1)` allows both species to be treated discretely when required.
+* `switching_threshold = c(30, 30)` defines the switching threshold for each species.
+* `return_type = "JSFResult"` returns a structured result containing the simulation trajectory and associated metadata.
+
+### Inspect the result
+
+Print the result:
+
+```{r}
+result_lv
+```
+
+Calculate a summary:
+
+```{r}
+summary(result_lv)
+```
+
+Plot the simulated trajectories:
+
+```{r}
+plot(result_lv)
+```
+
+## SIR epidemic model
+
+The SIR model describes the spread of an infectious disease through three compartments:
+
+* `S`: susceptible;
+* `I`: infectious;
+* `R`: recovered.
+
+The model contains two reactions:
+
+1. Infection: `S + I -> 2 I`
+2. Recovery: `I -> R`
+
+The state vector is:
+
+```{r}
+x <- c(S, I, R)
+```
+
+### Define the model parameters
+
+Set the total population, infection rate, and recovery rate:
+
+```{r}
+N <- 1000
+beta <- 0.5
+gamma <- 0.1
+```
+
+Here:
+
+```text
+N      = total population
+beta   = infection rate
+gamma  = recovery rate
+```
+
+### Define the rate function
+
+Create a Python callable containing the infection and recovery rates:
+
+```{r}
+rates_sir <- reticulate::py_eval(sprintf(
+  "lambda x, t: [%f * x[0] * x[1] / %f, %f * x[1]]",
+  beta,
+  N,
+  gamma
+))
+```
+
+The rates correspond to:
+
+```text
+beta * S * I / N    # infection
+gamma * I           # recovery
+```
+
+### Define the stoichiometry
+
+Define the reactant matrix:
+
+```{r}
+reactant_sir <- matrix(
+  c(
+    1, 1, 0,
+    0, 1, 0
+  ),
+  ncol = 3,
+  byrow = TRUE
+)
+
+reactant_sir
+```
+
+Define the product matrix:
+
+```{r}
+product_sir <- matrix(
+  c(
+    0, 2, 0,
+    0, 0, 1
+  ),
+  ncol = 3,
+  byrow = TRUE
+)
+
+product_sir
+```
+
+The net state changes are:
+
+```text
+S + I -> 2 I    [-1, +1,  0]
+I -> R          [ 0, -1, +1]
+```
+
+### Run the simulation
+
+```{r}
+result_sir <- jsf_simulate(
+  x0 = c(S = N - 10, I = 10, R = 0),
+  rates = rates_sir,
+  reactant = reactant_sir,
+  product = product_sir,
+  do_disc = c(0, 1, 0),
+  t_max = 60,
+  dt = 0.1,
+  switching_threshold = c(N, 10, N),
+  species_names = c("S", "I", "R"),
+  return_type = "JSFResult"
+)
+```
+
+In this example, `do_disc = c(0, 1, 0)` allows the infectious compartment to be treated discretely when required.
+
+This is useful because stochastic effects can be particularly important when the number of infectious individuals is small.
+
+### Inspect the result
+
+Print the result:
+
+```{r}
+result_sir
+```
+
+Calculate a summary:
+
+```{r}
+summary(result_sir)
+```
+
+Plot the simulated trajectories:
+
+```{r}
+plot(result_sir)
+```
+
+## Return a data frame
+
+The default output from `jsf_simulate()` is a regular R `data.frame`.
+
+```{r}
+df_lv <- jsf_simulate(
+  x0 = c(prey = 50, predator = 10),
+  rates = rates_lv,
+  reactant = reactant_lv,
+  product = product_lv,
+  do_disc = c(1, 1),
+  t_max = 10,
+  dt = 0.01,
+  switching_threshold = c(30, 30),
+  species_names = c("prey", "predator"),
+  return_type = "data.frame"
+)
+
+head(df_lv)
+```
+
+A data frame returned by `jsf_simulate()` contains:
+
+* a `time` column; and
+* one column for each model species.
+
+A data frame can later be converted into a `JSFResult` object:
+
+```{r}
+result_from_df <- as_jsf_result(
+  df_lv,
+  method = "operator-splitting",
+  config = list(
+    model = "Lotka-Volterra",
+    dt = 0.01,
+    switching_threshold = c(30, 30)
+  )
+)
+
+result_from_df
+```
+
+## Summary
+
+The main `rjsf` workflow is:
+
+```text
+Define the initial state
+  -> define the rate function
+  -> define the reactant and product matrices
+  -> call jsf_simulate()
+  -> return a data.frame or JSFResult
+  -> inspect the output with print(), summary(), and plot()
+```
+
+Use a `data.frame` when you primarily need the simulation values for further analysis.
+
+Use a `JSFResult` when you want a structured object containing both the simulation trajectories and their associated metadata.

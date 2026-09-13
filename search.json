@@ -1,0 +1,149 @@
+[
+  {
+    "objectID": "NEWS.html",
+    "href": "NEWS.html",
+    "title": "rjsf 0.0.0.9000",
+    "section": "",
+    "text": "rjsf 0.0.0.9000\n\nAdded initial R package skeleton.\nAdded reticulate bridge to Python jsf.\nAdded Lotka-Volterra and SIR examples.\nAdded general jsf_simulate() wrapper.\nAdded initial JSFResult S7 class, constructor, converter, print, and summary methods."
+  },
+  {
+    "objectID": "_qrtdown/citation.html",
+    "href": "_qrtdown/citation.html",
+    "title": "Citation",
+    "section": "",
+    "text": "To cite this package in publications, use:\n\nVu T (2026). rjsf: An R Interface to the Jump-Switch-Flow Simulator. R package version 0.0.0.9000, https://github.com/olivervu25/rjsf.\n\n\n\n@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.0.0.9000},\n  url = {https://github.com/olivervu25/rjsf},\n}"
+  },
+  {
+    "objectID": "_qrtdown/citation.html#bibtex-entry",
+    "href": "_qrtdown/citation.html#bibtex-entry",
+    "title": "Citation",
+    "section": "",
+    "text": "@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.0.0.9000},\n  url = {https://github.com/olivervu25/rjsf},\n}"
+  },
+  {
+    "objectID": "_qrtdown/reference.html",
+    "href": "_qrtdown/reference.html",
+    "title": "Function reference",
+    "section": "",
+    "text": "All functions and classes exported by rjsf."
+  },
+  {
+    "objectID": "_qrtdown/reference.html#functions",
+    "href": "_qrtdown/reference.html#functions",
+    "title": "Function reference",
+    "section": "Functions",
+    "text": "Functions\n\n\n\nFunction\nDescription\n\n\n\n\nas_jsf_result()\nConvert a JSF output data frame to a JSFResult object\n\n\njsf_available()\nCheck whether the Python jsf package is available\n\n\njsf_lotka_volterra()\nSimulate a Lotka-Volterra predator-prey model using JSF\n\n\njsf_simulate()\nSimulate a compartmental model using JSF\n\n\njsf_sir()\nSimulate an SIR epidemic model using JSF\n\n\nnew_jsf_result()\nCreate a JSFResult object"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "rjsf",
+    "section": "",
+    "text": "MIT + file LICENSE\n\n\n\nCiting this package\n\n\n\n\nThanh Long Vu (author, maintainer)\nrjsf provides an R interface to the Python jsf package for Jump-Switch-Flow simulation.\nThe main function is jsf_simulate(), which lets users define compartmental reaction models in R, call the Python jsf backend through reticulate, and return simulation output as either a regular data.frame or a structured JSFResult object."
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "rjsf",
+    "section": "Installation",
+    "text": "Installation\nYou can install the development version of rjsf from GitHub with:\n# install.packages(\"pak\")\npak::pak(\"olivervu25/rjsf\")"
+  },
+  {
+    "objectID": "index.html#python-setup",
+    "href": "index.html#python-setup",
+    "title": "rjsf",
+    "section": "Python setup",
+    "text": "Python setup\nrjsf uses reticulate to call the Python jsf package. This means Python jsf must be installed in the same Python environment that reticulate is using.\nA recommended setup is to create a local virtual environment:\npython3 -m venv .venv\nsource .venv/bin/activate\n\npython -m pip install --upgrade pip setuptools wheel\npython -m pip install numpy scipy pandas matplotlib python-libsbml\npython -m pip install git+https://github.com/DGermano8/jsf.git\nThen in R, point reticulate to that environment:\nSys.setenv(RETICULATE_PYTHON = \".venv/bin/python\")\n\nlibrary(reticulate)\npy_config()\nCheck that Python jsf is available:\nlibrary(rjsf)\n\njsf_available()\nThis should return:\n[1] TRUE"
+  },
+  {
+    "objectID": "index.html#alternative-setup-using-reticulate",
+    "href": "index.html#alternative-setup-using-reticulate",
+    "title": "rjsf",
+    "section": "Alternative setup using reticulate",
+    "text": "Alternative setup using reticulate\nYou can also install the Python dependencies from R using reticulate:\nlibrary(reticulate)\n\nvirtualenv_create(\"rjsf-env\")\n\npy_install(\n  packages = c(\"numpy\", \"scipy\", \"pandas\", \"matplotlib\", \"python-libsbml\"),\n  envname = \"rjsf-env\",\n  method = \"virtualenv\"\n)\n\npy_install(\n  packages = \"git+https://github.com/DGermano8/jsf.git\",\n  envname = \"rjsf-env\",\n  method = \"virtualenv\",\n  pip = TRUE\n)\n\nuse_virtualenv(\"rjsf-env\", required = TRUE)\nThen check:\nlibrary(rjsf)\n\njsf_available()"
+  },
+  {
+    "objectID": "index.html#quick-example",
+    "href": "index.html#quick-example",
+    "title": "rjsf",
+    "section": "Quick example",
+    "text": "Quick example\nThe following example simulates a Lotka-Volterra predator-prey system and returns a structured JSFResult object.\nlibrary(rjsf)\nlibrary(reticulate)\n\nrates_lv &lt;- reticulate::py_eval(\n  \"lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]\"\n)\n\nresult &lt;- jsf_simulate(\n  x0 = c(prey = 50, predator = 10),\n  rates = rates_lv,\n  reactant = matrix(\n    c(\n      1, 0,\n      0, 1,\n      1, 1\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  product = matrix(\n    c(\n      2, 0,\n      0, 0,\n      0, 2\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  do_disc = c(1, 1),\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = c(30, 30),\n  species_names = c(\"prey\", \"predator\"),\n  return_type = \"JSFResult\"\n)\n\nresult\nsummary(result)\nplot(result)"
+  },
+  {
+    "objectID": "index.html#output-types",
+    "href": "index.html#output-types",
+    "title": "rjsf",
+    "section": "Output types",
+    "text": "Output types\njsf_simulate() can return either a regular data frame:\ndf &lt;- jsf_simulate(..., return_type = \"data.frame\")\nor a structured JSFResult object:\nresult &lt;- jsf_simulate(..., return_type = \"JSFResult\")\nA JSFResult stores simulation trajectories and metadata, and supports:\nprint(result)\nsummary(result)\nplot(result)\nThe simulated prey and predator trajectories can be visualised directly from the JSFResult object:"
+  },
+  {
+    "objectID": "index.html#vignettes",
+    "href": "index.html#vignettes",
+    "title": "rjsf",
+    "section": "Vignettes",
+    "text": "Vignettes\nSee the getting started vignette for full Lotka-Volterra and SIR examples."
+  },
+  {
+    "objectID": "_qrtdown/articles.html",
+    "href": "_qrtdown/articles.html",
+    "title": "Articles",
+    "section": "",
+    "text": "rjsf Articles\nIn-depth guides and tutorials for using the package.\n\nGetting started with rjsf"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html",
+    "href": "vignettes/articles/getting-started.html",
+    "title": "Getting started with rjsf",
+    "section": "",
+    "text": "rjsf provides an R interface to the Python jsf package for Jump-Switch-Flow simulation.\nThe main user-facing function is jsf_simulate(). It lets users:\n\nDefine a compartmental reaction model in R.\nPass the model to the Python jsf backend through reticulate.\nReturn the simulation output as either:\n\na regular R data.frame; or\na structured JSFResult object.\n\n\nA JSFResult object supports standard methods such as:\n\nprint(result)\nsummary(result)\nplot(result)"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#introduction",
+    "href": "vignettes/articles/getting-started.html#introduction",
+    "title": "Getting started with rjsf",
+    "section": "",
+    "text": "rjsf provides an R interface to the Python jsf package for Jump-Switch-Flow simulation.\nThe main user-facing function is jsf_simulate(). It lets users:\n\nDefine a compartmental reaction model in R.\nPass the model to the Python jsf backend through reticulate.\nReturn the simulation output as either:\n\na regular R data.frame; or\na structured JSFResult object.\n\n\nA JSFResult object supports standard methods such as:\n\nprint(result)\nsummary(result)\nplot(result)"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#set-up-python-jsf",
+    "href": "vignettes/articles/getting-started.html#set-up-python-jsf",
+    "title": "Getting started with rjsf",
+    "section": "Set up Python jsf",
+    "text": "Set up Python jsf\nrjsf uses reticulate to communicate with Python. The Python jsf package must therefore be installed in the same Python environment used by reticulate.\nOne option is to install the dependencies from R:\n\ninstall.packages(\"reticulate\")\n\nreticulate::virtualenv_create(\"rjsf-env\")\n\nreticulate::py_install(\n  packages = c(\n    \"numpy\",\n    \"python-libsbml\",\n    \"ipykernel\"\n  ),\n  envname = \"rjsf-env\",\n  method = \"virtualenv\"\n)\n\nreticulate::py_install(\n  packages = \"git+https://github.com/DGermano8/jsf.git\",\n  envname = \"rjsf-env\",\n  method = \"virtualenv\",\n  pip = TRUE\n)\n\nreticulate::use_virtualenv(\n  \"rjsf-env\",\n  required = TRUE\n)\n\nYou can inspect the Python environment selected by reticulate with:\n\nreticulate::py_config()"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#check-python-jsf",
+    "href": "vignettes/articles/getting-started.html#check-python-jsf",
+    "title": "Getting started with rjsf",
+    "section": "Check Python jsf",
+    "text": "Check Python jsf\nLoad rjsf and check whether the Python jsf module is available:\n\nlibrary(rjsf)\n\njsf_available()\n\nA correctly configured environment should return:\n[1] TRUE\nIf it returns FALSE, check that:\n\nPython jsf is installed;\nit is installed in the environment currently used by reticulate; and\nreticulate::py_config() reports the expected Python executable."
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#lotkavolterra-predatorprey-model",
+    "href": "vignettes/articles/getting-started.html#lotkavolterra-predatorprey-model",
+    "title": "Getting started with rjsf",
+    "section": "Lotka–Volterra predator–prey model",
+    "text": "Lotka–Volterra predator–prey model\nThe Lotka–Volterra model describes interactions between two species:\n\nprey;\npredator.\n\nThe model contains three reactions:\n\nPrey birth: Prey -&gt; 2 Prey\nPredator death: Predator -&gt; ∅\nPredation: Prey + Predator -&gt; 2 Predator\n\nThe state vector is:\n\nx &lt;- c(prey, predator)\n\n\nDefine the rate function\nThe Python jsf backend expects the rate function to be a Python callable. We create one using reticulate::py_eval():\n\nrates_lv &lt;- reticulate::py_eval(\n  \"lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]\"\n)\n\nThe three rates correspond to:\n2.0 * prey                # prey birth\n1.5 * predator            # predator death\n0.05 * prey * predator    # predation\n\n\nDefine the stoichiometry\nThe reactant matrix describes what each reaction consumes:\n\nreactant_lv &lt;- matrix(\n  c(\n    1, 0,\n    0, 1,\n    1, 1\n  ),\n  ncol = 2,\n  byrow = TRUE\n)\n\nreactant_lv\n\nThe product matrix describes what each reaction produces:\n\nproduct_lv &lt;- matrix(\n  c(\n    2, 0,\n    0, 0,\n    0, 2\n  ),\n  ncol = 2,\n  byrow = TRUE\n)\n\nproduct_lv\n\nInternally, jsf_simulate() calculates the net stoichiometry matrix as:\nnu = product - reactant\nFor this model, the net state changes are:\nPrey -&gt; 2 Prey                 [+1,  0]\nPredator -&gt; ∅                  [ 0, -1]\nPrey + Predator -&gt; 2 Predator  [-1, +1]\n\n\nRun the simulation\nRun the model and request a JSFResult object:\n\nresult_lv &lt;- jsf_simulate(\n  x0 = c(prey = 50, predator = 10),\n  rates = rates_lv,\n  reactant = reactant_lv,\n  product = product_lv,\n  do_disc = c(1, 1),\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = c(30, 30),\n  species_names = c(\"prey\", \"predator\"),\n  return_type = \"JSFResult\"\n)\n\nThe important arguments are:\n\nx0 defines the initial number of prey and predators.\ndo_disc = c(1, 1) allows both species to be treated discretely when required.\nswitching_threshold = c(30, 30) defines the switching threshold for each species.\nreturn_type = \"JSFResult\" returns a structured result containing the simulation trajectory and associated metadata.\n\n\n\nInspect the result\nPrint the result:\n\nresult_lv\n\nCalculate a summary:\n\nsummary(result_lv)\n\nPlot the simulated trajectories:\n\nplot(result_lv)"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#sir-epidemic-model",
+    "href": "vignettes/articles/getting-started.html#sir-epidemic-model",
+    "title": "Getting started with rjsf",
+    "section": "SIR epidemic model",
+    "text": "SIR epidemic model\nThe SIR model describes the spread of an infectious disease through three compartments:\n\nS: susceptible;\nI: infectious;\nR: recovered.\n\nThe model contains two reactions:\n\nInfection: S + I -&gt; 2 I\nRecovery: I -&gt; R\n\nThe state vector is:\n\nx &lt;- c(S, I, R)\n\n\nDefine the model parameters\nSet the total population, infection rate, and recovery rate:\n\nN &lt;- 1000\nbeta &lt;- 0.5\ngamma &lt;- 0.1\n\nHere:\nN      = total population\nbeta   = infection rate\ngamma  = recovery rate\n\n\nDefine the rate function\nCreate a Python callable containing the infection and recovery rates:\n\nrates_sir &lt;- reticulate::py_eval(sprintf(\n  \"lambda x, t: [%f * x[0] * x[1] / %f, %f * x[1]]\",\n  beta,\n  N,\n  gamma\n))\n\nThe rates correspond to:\nbeta * S * I / N    # infection\ngamma * I           # recovery\n\n\nDefine the stoichiometry\nDefine the reactant matrix:\n\nreactant_sir &lt;- matrix(\n  c(\n    1, 1, 0,\n    0, 1, 0\n  ),\n  ncol = 3,\n  byrow = TRUE\n)\n\nreactant_sir\n\nDefine the product matrix:\n\nproduct_sir &lt;- matrix(\n  c(\n    0, 2, 0,\n    0, 0, 1\n  ),\n  ncol = 3,\n  byrow = TRUE\n)\n\nproduct_sir\n\nThe net state changes are:\nS + I -&gt; 2 I    [-1, +1,  0]\nI -&gt; R          [ 0, -1, +1]\n\n\nRun the simulation\n\nresult_sir &lt;- jsf_simulate(\n  x0 = c(S = N - 10, I = 10, R = 0),\n  rates = rates_sir,\n  reactant = reactant_sir,\n  product = product_sir,\n  do_disc = c(0, 1, 0),\n  t_max = 60,\n  dt = 0.1,\n  switching_threshold = c(N, 10, N),\n  species_names = c(\"S\", \"I\", \"R\"),\n  return_type = \"JSFResult\"\n)\n\nIn this example, do_disc = c(0, 1, 0) allows the infectious compartment to be treated discretely when required.\nThis is useful because stochastic effects can be particularly important when the number of infectious individuals is small.\n\n\nInspect the result\nPrint the result:\n\nresult_sir\n\nCalculate a summary:\n\nsummary(result_sir)\n\nPlot the simulated trajectories:\n\nplot(result_sir)"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#return-a-data-frame",
+    "href": "vignettes/articles/getting-started.html#return-a-data-frame",
+    "title": "Getting started with rjsf",
+    "section": "Return a data frame",
+    "text": "Return a data frame\nThe default output from jsf_simulate() is a regular R data.frame.\n\ndf_lv &lt;- jsf_simulate(\n  x0 = c(prey = 50, predator = 10),\n  rates = rates_lv,\n  reactant = reactant_lv,\n  product = product_lv,\n  do_disc = c(1, 1),\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = c(30, 30),\n  species_names = c(\"prey\", \"predator\"),\n  return_type = \"data.frame\"\n)\n\nhead(df_lv)\n\nA data frame returned by jsf_simulate() contains:\n\na time column; and\none column for each model species.\n\nA data frame can later be converted into a JSFResult object:\n\nresult_from_df &lt;- as_jsf_result(\n  df_lv,\n  method = \"operator-splitting\",\n  config = list(\n    model = \"Lotka-Volterra\",\n    dt = 0.01,\n    switching_threshold = c(30, 30)\n  )\n)\n\nresult_from_df"
+  },
+  {
+    "objectID": "vignettes/articles/getting-started.html#summary",
+    "href": "vignettes/articles/getting-started.html#summary",
+    "title": "Getting started with rjsf",
+    "section": "Summary",
+    "text": "Summary\nThe main rjsf workflow is:\nDefine the initial state\n  -&gt; define the rate function\n  -&gt; define the reactant and product matrices\n  -&gt; call jsf_simulate()\n  -&gt; return a data.frame or JSFResult\n  -&gt; inspect the output with print(), summary(), and plot()\nUse a data.frame when you primarily need the simulation values for further analysis.\nUse a JSFResult when you want a structured object containing both the simulation trajectories and their associated metadata."
+  }
+]
