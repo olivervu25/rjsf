@@ -87,6 +87,8 @@ jsf_available()
 
 ## Quick example
 
+The following example simulates a Lotka-Volterra predator-prey system and returns a structured `JSFResult` object.
+
 ```r
 library(rjsf)
 library(reticulate)
@@ -150,6 +152,10 @@ print(result)
 summary(result)
 plot(result)
 ```
+
+The simulated prey and predator trajectories can be visualised directly from the `JSFResult` object:
+
+![](man/figures/lotka-volterra-example.png){fig-alt="Lotka-Volterra prey and predator trajectories generated with rjsf" width=700}
 
 ## Vignettes
 
