@@ -19,3 +19,8 @@
 ^_freeze$
 ^\.github$
 ^\.github$
+^doc$
+^Meta$
+^Experiments\.Rmd$
+^Experiments\.html$
+^__init__\.py$

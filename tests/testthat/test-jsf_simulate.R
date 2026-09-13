@@ -1,4 +1,10 @@
 test_that("jsf_simulate works for Lotka-Volterra", {
+
+  skip_if_not(
+    jsf_available(),
+    "Python Jump-Switch-Flow package is not available"
+  )
+
   rates_lv <- reticulate::py_eval(
     "lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]"
   )
@@ -40,6 +46,12 @@ test_that("jsf_simulate works for Lotka-Volterra", {
 })
 
 test_that("jsf_simulate works for SIR", {
+
+  skip_if_not(
+    jsf_available(),
+    "Python Jump-Switch-Flow package is not available"
+  )
+
   N <- 1000
   beta <- 0.5
   gamma <- 0.1

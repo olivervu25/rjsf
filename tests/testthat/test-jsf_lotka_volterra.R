@@ -1,4 +1,10 @@
 test_that("jsf_lotka_volterra returns valid output", {
+
+  skip_if_not(
+    jsf_available(),
+    "Python Jump-Switch-Flow package is not available"
+  )
+
   out <- jsf_lotka_volterra(t_max = 2)
 
   expect_s3_class(out, "data.frame")

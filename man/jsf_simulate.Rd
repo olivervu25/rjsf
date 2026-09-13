@@ -13,6 +13,12 @@ jsf_simulate(
   t_max,
   dt,
   switching_threshold,
+  tau_threshold = NULL,
+  tau_epsilon = 0.03,
+  critical_threshold = 10,
+  tau_debug = FALSE,
+  tau_debug_every = 20,
+  tau_debug_max = 30,
   species_names = NULL,
   enforce_do = NULL,
   method = "operator-splitting",
@@ -39,12 +45,32 @@ discretely/stochastically.}
 \item{switching_threshold}{Switching threshold. Can be a scalar or one value
 per species.}
 
+\item{tau_threshold}{Threshold controlling when species are handled by the
+tau-leaping component. May be \code{NULL}, a scalar, or one value per species.
+If \code{NULL}, defaults to \code{switching_threshold}.}
+
+\item{tau_epsilon}{Positive numeric scalar specifying the tau-leaping
+epsilon parameter passed to the Python JSF backend.}
+
+\item{critical_threshold}{Non-negative numeric scalar specifying the
+critical-reaction threshold passed to the Python JSF backend.}
+
+\item{tau_debug}{Logical. If \code{TRUE}, enables diagnostic output from the
+tau-leaping simulator.}
+
+\item{tau_debug_every}{Integer controlling how often tau-leaping diagnostic
+information is printed.}
+
+\item{tau_debug_max}{Integer giving the maximum number of tau-leaping
+diagnostic messages to print.}
+
 \item{species_names}{Optional character vector of species names.}
 
 \item{enforce_do}{Integer vector controlling enforced discrete behaviour.
 Defaults to zero for all species.}
 
-\item{method}{JSF simulation method.}
+\item{method}{JSF simulation method. Supported values include \code{"exact"},
+\code{"operator-splitting"}, and \code{"tau-operator-splitting"}.}
 
 \item{return_type}{Output type. Either \code{"data.frame"} or \code{"JSFResult"}.}
 }

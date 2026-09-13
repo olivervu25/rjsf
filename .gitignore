@@ -63,3 +63,5 @@ _qrtdown/
 index.qmd
 /.quarto/
 **/*.quarto_ipynb
+/doc/
+/Meta/

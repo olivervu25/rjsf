@@ -1,4 +1,10 @@
 test_that("jsf_sir returns valid output", {
+
+  skip_if_not(
+    jsf_available(),
+    "Python Jump-Switch-Flow package is not available"
+  )
+
   out <- jsf_sir(t_max = 5)
 
   expect_s3_class(out, "data.frame")

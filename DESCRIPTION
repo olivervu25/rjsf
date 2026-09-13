@@ -1,5 +1,5 @@
 Package: rjsf
-Title: What the Package Does (One Line, Title Case)
+Title: R Interface to Jump-Switch-Flow Simulation
 Version: 0.0.0.9000
 Authors@R:
     person(
@@ -11,16 +11,16 @@ Authors@R:
 Description: Provides an R interface to the Python 'jsf' package for
     Jump-Switch-Flow simulation of compartmental reaction models. It supports
     model definition in R, simulation through 'reticulate', and structured
-    outputs for inspection, summarisation, and plotting.License: MIT + file LICENSE
+    outputs for inspection, summarisation, and plotting.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
-Imports: 
+Imports:
     reticulate,
     S7
-VignetteBuilder: knitr
+Suggests:
+    quarto,
+    testthat (>= 3.0.0)
+VignetteBuilder: quarto
+Config/testthat/edition: 3

@@ -16,9 +16,23 @@
 #' @param dt Time step for the continuous/ODE part of JSF.
 #' @param switching_threshold Switching threshold. Can be a scalar or one value
 #'   per species.
+#' @param tau_threshold Threshold controlling when species are handled by the
+#'  tau-leaping component. May be `NULL`, a scalar, or one value per species.
+#'  If `NULL`, defaults to `switching_threshold`.
+#' @param tau_epsilon Positive numeric scalar specifying the tau-leaping
+#'   epsilon parameter passed to the Python JSF backend.
+#' @param critical_threshold Non-negative numeric scalar specifying the
+#'   critical-reaction threshold passed to the Python JSF backend.
+#' @param tau_debug Logical. If `TRUE`, enables diagnostic output from the
+#'   tau-leaping simulator.
+#' @param tau_debug_every Integer controlling how often tau-leaping diagnostic
+#'   information is printed.
+#' @param tau_debug_max Integer giving the maximum number of tau-leaping
+#'   diagnostic messages to print.
 #' @param enforce_do Integer vector controlling enforced discrete behaviour.
 #'   Defaults to zero for all species.
-#' @param method JSF simulation method.
+#' @param method JSF simulation method. Supported values include `"exact"`,
+#'   `"operator-splitting"`, and `"tau-operator-splitting"`.
 #' @param return_type Output type. Either `"data.frame"` or `"JSFResult"`.
 #'
 #' @return If `return_type = "data.frame"`, a data frame with a `time` column
