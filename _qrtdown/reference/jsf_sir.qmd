@@ -2,7 +2,7 @@
 title: "jsf_sir"
 ---
 
-[< Back to Reference](../reference.qmd)
+[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_sir.R#L16)
 
 # `jsf_sir()`
 

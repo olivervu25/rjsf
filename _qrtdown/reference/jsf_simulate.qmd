@@ -2,7 +2,7 @@
 title: "jsf_simulate"
 ---
 
-[< Back to Reference](../reference.qmd)
+[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_simulate.R#L83)
 
 # `jsf_simulate()`
 

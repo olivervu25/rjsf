@@ -2,7 +2,7 @@
 title: "new_jsf_result"
 ---
 
-[< Back to Reference](../reference.qmd)
+[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_result.R#L75)
 
 # `new_jsf_result()`
 

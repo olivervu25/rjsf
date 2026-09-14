@@ -2,7 +2,7 @@
 title: "jsf_lotka_volterra"
 ---
 
-[< Back to Reference](../reference.qmd)
+[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_lotka_volterra.R#L18)
 
 # `jsf_lotka_volterra()`
 

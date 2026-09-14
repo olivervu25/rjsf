@@ -11,14 +11,14 @@
     "href": "_qrtdown/citation.html",
     "title": "Citation",
     "section": "",
-    "text": "To cite this package in publications, use:\n\nVu T (2026). rjsf: An R Interface to the Jump-Switch-Flow Simulator. R package version 0.0.0.9000, https://github.com/olivervu25/rjsf.\n\n\n\n@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.0.0.9000},\n  url = {https://github.com/olivervu25/rjsf},\n}"
+    "text": "To cite this package in publications, use:\n\nVu T (2026). rjsf: An R Interface to the Jump-Switch-Flow Simulator. R package version 0.1.0, https://github.com/olivervu25/rjsf. Germano DPJ, Zarebski AE, Hautphenne S, Moss R, Flegg JA, Flegg MB (2026). “A hybrid framework for compartmental models enabling simulation-based inference.” Journal of Mathematical Biology, 92, 93. doi:10.1007/s00285-026-02409-y https://doi.org/10.1007/s00285-026-02409-y. https://doi.org/10.1007/s00285-026-02409-y.\n\n\n\n@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.1.0},\n  url = {https://github.com/olivervu25/rjsf},\n}\n@Article{,\n  title = {A hybrid framework for compartmental models enabling simulation-based inference},\n  author = {Domenic P. J. Germano and Alexander E. Zarebski and Sophie Hautphenne and Robert Moss and Jennifer A. Flegg and Mark B. Flegg},\n  journal = {Journal of Mathematical Biology},\n  year = {2026},\n  volume = {92},\n  pages = {93},\n  doi = {10.1007/s00285-026-02409-y},\n  url = {https://doi.org/10.1007/s00285-026-02409-y},\n}"
   },
   {
     "objectID": "_qrtdown/citation.html#bibtex-entry",
     "href": "_qrtdown/citation.html#bibtex-entry",
     "title": "Citation",
     "section": "",
-    "text": "@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.0.0.9000},\n  url = {https://github.com/olivervu25/rjsf},\n}"
+    "text": "@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu},\n  year = {2026},\n  note = {R package version 0.1.0},\n  url = {https://github.com/olivervu25/rjsf},\n}\n@Article{,\n  title = {A hybrid framework for compartmental models enabling simulation-based inference},\n  author = {Domenic P. J. Germano and Alexander E. Zarebski and Sophie Hautphenne and Robert Moss and Jennifer A. Flegg and Mark B. Flegg},\n  journal = {Journal of Mathematical Biology},\n  year = {2026},\n  volume = {92},\n  pages = {93},\n  doi = {10.1007/s00285-026-02409-y},\n  url = {https://doi.org/10.1007/s00285-026-02409-y},\n}"
   },
   {
     "objectID": "_qrtdown/reference.html",
@@ -39,7 +39,7 @@
     "href": "index.html",
     "title": "rjsf",
     "section": "",
-    "text": "MIT + file LICENSE\n\n\n\nCiting this package\n\n\n\n\nThanh Long Vu (author, maintainer)\nrjsf provides an R interface to Jump-Switch-Flow (JSF), a hybrid simulation framework for compartmental models that combines stochastic jump dynamics at low populations with deterministic flow dynamics at high populations.\nImportant: rjsf is an R interface; running simulations requires the Python Jump-Switch-Flow backend to be installed and accessible through reticulate.\nThe main function is jsf_simulate(), which lets users define compartmental reaction models in R and return simulation output as either a regular data.frame or a structured JSFResult object."
+    "text": "Source Code\nReport a Bug\n\n\n\n\nMIT + file LICENSE\n\n\n\nCiting this package\n\n\n\n\nThanh Long Vu (author, maintainer)\nrjsf provides an R interface to Jump-Switch-Flow (JSF), a hybrid simulation framework for compartmental models that combines stochastic jump dynamics at low populations with deterministic flow dynamics at high populations.\nImportant: rjsf is an R interface; running simulations requires the Python Jump-Switch-Flow backend to be installed and accessible through reticulate.\nThe main function is jsf_simulate(), which lets users define compartmental reaction models in R and return simulation output as either a regular data.frame or a structured JSFResult object."
   },
   {
     "objectID": "index.html#installation",
