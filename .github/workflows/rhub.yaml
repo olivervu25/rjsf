@@ -61,8 +61,20 @@ jobs:
       - uses: r-hub/actions/checkout@v1
 
       - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
+        shell: bash
+        run: |
+          QUARTO_VERSION="1.10.18"
+          mkdir -p "$HOME/opt"
 
+          wget -q \
+            "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.tar.gz" \
+            -O /tmp/quarto.tar.gz
+
+          tar -xzf /tmp/quarto.tar.gz -C "$HOME/opt"
+
+          echo "$HOME/opt/quarto-${QUARTO_VERSION}/bin" >> "$GITHUB_PATH"
+
+          "$HOME/opt/quarto-${QUARTO_VERSION}/bin/quarto" --version
       - uses: r-hub/actions/platform-info@v1
         with:
           token: ${{ secrets.RHUB_TOKEN }}
