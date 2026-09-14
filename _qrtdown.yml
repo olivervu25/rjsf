@@ -1,4 +1,4 @@
-url: .na.character
+url: https://olivervu25.github.io/rjsf/
 freeze: auto
 
 template:
@@ -12,19 +12,19 @@ template:
     h5: 1rem
 
 navbar:
-  title: rjsf 0.0.0.9000
+  title: rjsf 0.1.0
   logo: man/figures/logo.png
 
   left:
-  - text: Reference
-    href: _qrtdown/reference.qmd
-  - text: Changelog
-    href: NEWS.md
+    - text: Reference
+      href: _qrtdown/reference.qmd
+    - text: Changelog
+      href: NEWS.md
 
   right:
-  - icon: code-square
-    href: .na.character
-    aria-label: Source code
+    - icon: code-square
+      href: https://github.com/olivervu25/rjsf
+      aria-label: Source code
 
 reference: []
 articles: []
