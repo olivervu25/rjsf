@@ -24,3 +24,5 @@
 ^Experiments\.Rmd$
 ^Experiments\.html$
 ^__init__\.py$
+^\.github$
+^\.github$

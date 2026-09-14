@@ -1,3 +1,9 @@
+citHeader(
+  "If you use rjsf in your work, please cite both the rjsf package ",
+  "and the original Jump-Switch-Flow methodology."
+)
+
+## rjsf package
 bibentry(
   bibtype = "Manual",
   title = "{rjsf}: An R Interface to the Jump-Switch-Flow Simulator",
@@ -6,6 +12,31 @@ bibentry(
     family = "Vu"
   ),
   year = "2026",
-  note = "R package version 0.0.0.9000",
+  note = "R package version 0.1.0",
   url = "https://github.com/olivervu25/rjsf"
+)
+
+## Original Jump-Switch-Flow methodology
+bibentry(
+  bibtype = "Article",
+  title = "A hybrid framework for compartmental models enabling simulation-based inference",
+  author = c(
+    person(c("Domenic", "P.", "J."), "Germano"),
+    person(c("Alexander", "E."), "Zarebski"),
+    person("Sophie", "Hautphenne"),
+    person("Robert", "Moss"),
+    person(c("Jennifer", "A."), "Flegg"),
+    person(c("Mark", "B."), "Flegg")
+  ),
+  journal = "Journal of Mathematical Biology",
+  year = "2026",
+  volume = "92",
+  pages = "93",
+  doi = "10.1007/s00285-026-02409-y",
+  url = "https://doi.org/10.1007/s00285-026-02409-y"
+)
+
+citFooter(
+  "The upstream Python implementation of Jump-Switch-Flow is available at ",
+  "https://github.com/DGermano8/jsf."
 )
