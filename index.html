@@ -203,8 +203,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Thanh Long Vu (author, maintainer)</li>
 </ul>
 </section>
-</div></div><p><code>rjsf</code> provides an R interface to the Python <code>jsf</code> package for Jump-Switch-Flow simulation.</p>
-<p>The main function is <code>jsf_simulate()</code>, which lets users define compartmental reaction models in R, call the Python <code>jsf</code> backend through <code>reticulate</code>, and return simulation output as either a regular <code>data.frame</code> or a structured <code>JSFResult</code> object.</p>
+</div></div><p><code>rjsf</code> provides an R interface to Jump-Switch-Flow (JSF), a hybrid simulation framework for compartmental models that combines stochastic jump dynamics at low populations with deterministic flow dynamics at high populations.</p>
+<p><strong>Important:</strong> <code>rjsf</code> is an R interface; running simulations requires the Python Jump-Switch-Flow backend to be installed and accessible through <code>reticulate</code>.</p>
+<p>The main function is <code>jsf_simulate()</code>, which lets users define compartmental reaction models in R and return simulation output as either a regular <code>data.frame</code> or a structured <code>JSFResult</code> object.</p>
 <section id="installation" class="level2">
 <h2 class="anchored" data-anchor-id="installation">Installation</h2>
 <p>You can install the development version of <code>rjsf</code> from GitHub with:</p>

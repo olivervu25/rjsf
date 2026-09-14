@@ -39,7 +39,7 @@
     "href": "index.html",
     "title": "rjsf",
     "section": "",
-    "text": "MIT + file LICENSE\n\n\n\nCiting this package\n\n\n\n\nThanh Long Vu (author, maintainer)\nrjsf provides an R interface to the Python jsf package for Jump-Switch-Flow simulation.\nThe main function is jsf_simulate(), which lets users define compartmental reaction models in R, call the Python jsf backend through reticulate, and return simulation output as either a regular data.frame or a structured JSFResult object."
+    "text": "MIT + file LICENSE\n\n\n\nCiting this package\n\n\n\n\nThanh Long Vu (author, maintainer)\nrjsf provides an R interface to Jump-Switch-Flow (JSF), a hybrid simulation framework for compartmental models that combines stochastic jump dynamics at low populations with deterministic flow dynamics at high populations.\nImportant: rjsf is an R interface; running simulations requires the Python Jump-Switch-Flow backend to be installed and accessible through reticulate.\nThe main function is jsf_simulate(), which lets users define compartmental reaction models in R and return simulation output as either a regular data.frame or a structured JSFResult object."
   },
   {
     "objectID": "index.html#installation",
