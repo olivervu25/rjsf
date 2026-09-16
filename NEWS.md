@@ -1,4 +1,4 @@
-# rjsf 0.0.0.9000
+# rjsf 0.1.0
 
 - Added initial R package skeleton.
 - Added reticulate bridge to Python `jsf`.
