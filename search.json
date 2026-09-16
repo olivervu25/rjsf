@@ -46,21 +46,21 @@
     "href": "index.html#installation",
     "title": "rjsf",
     "section": "Installation",
-    "text": "Installation\nYou can install the development version of rjsf from GitHub with:\n# install.packages(\"pak\")\npak::pak(\"olivervu25/rjsf\")"
+    "text": "Installation\nOnce available on CRAN, you can install the released version of rjsf with:\ninstall.packages(\"rjsf\")\nYou can install the development version from GitHub with:\n# install.packages(\"pak\")\npak::pak(\"olivervu25/rjsf\")"
   },
   {
     "objectID": "index.html#python-setup",
     "href": "index.html#python-setup",
     "title": "rjsf",
     "section": "Python setup",
-    "text": "Python setup\nrjsf uses reticulate to call the Python jsf package. This means Python jsf must be installed in the same Python environment that reticulate is using.\nA recommended setup is to create a local virtual environment:\npython3 -m venv .venv\nsource .venv/bin/activate\n\npython -m pip install --upgrade pip setuptools wheel\npython -m pip install numpy scipy pandas matplotlib python-libsbml\npython -m pip install git+https://github.com/DGermano8/jsf.git\nThen in R, point reticulate to that environment:\nSys.setenv(RETICULATE_PYTHON = \".venv/bin/python\")\n\nlibrary(reticulate)\npy_config()\nCheck that Python jsf is available:\nlibrary(rjsf)\n\njsf_available()\nThis should return:\n[1] TRUE"
+    "text": "Python setup\nrjsf uses reticulate to call the Python jsf package. This means Python jsf must be installed in the same Python environment that reticulate is using.\nA recommended setup is to create a local virtual environment:\npython3 -m venv .venv\nsource .venv/bin/activate\n\npython -m pip install --upgrade pip setuptools wheel\npython -m pip install numpy scipy pandas matplotlib python-libsbml\npython -m pip install git+https://github.com/DGermano8/jsf\nThen in R, point reticulate to that environment:\nSys.setenv(RETICULATE_PYTHON = \".venv/bin/python\")\n\nlibrary(reticulate)\npy_config()\nCheck that Python jsf is available:\nlibrary(rjsf)\n\njsf_available()\nThis should return:\n[1] TRUE"
   },
   {
     "objectID": "index.html#alternative-setup-using-reticulate",
     "href": "index.html#alternative-setup-using-reticulate",
     "title": "rjsf",
     "section": "Alternative setup using reticulate",
-    "text": "Alternative setup using reticulate\nYou can also install the Python dependencies from R using reticulate:\nlibrary(reticulate)\n\nvirtualenv_create(\"rjsf-env\")\n\npy_install(\n  packages = c(\"numpy\", \"scipy\", \"pandas\", \"matplotlib\", \"python-libsbml\"),\n  envname = \"rjsf-env\",\n  method = \"virtualenv\"\n)\n\npy_install(\n  packages = \"git+https://github.com/DGermano8/jsf.git\",\n  envname = \"rjsf-env\",\n  method = \"virtualenv\",\n  pip = TRUE\n)\n\nuse_virtualenv(\"rjsf-env\", required = TRUE)\nThen check:\nlibrary(rjsf)\n\njsf_available()"
+    "text": "Alternative setup using reticulate\nYou can also install the Python dependencies from R using reticulate:\nlibrary(reticulate)\n\nvirtualenv_create(\"rjsf-env\")\n\npy_install(\n  packages = c(\"numpy\", \"scipy\", \"pandas\", \"matplotlib\", \"python-libsbml\"),\n  envname = \"rjsf-env\",\n  method = \"virtualenv\"\n)\n\npy_install(\n  packages = \"git+https://github.com/DGermano8/jsf\",\n  envname = \"rjsf-env\",\n  method = \"virtualenv\",\n  pip = TRUE\n)\n\nuse_virtualenv(\"rjsf-env\", required = TRUE)\nThen check:\nlibrary(rjsf)\n\njsf_available()"
   },
   {
     "objectID": "index.html#quick-example",
