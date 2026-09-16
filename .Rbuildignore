@@ -1,12 +1,15 @@
 ^rjsf\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+
+# Python / development
 ^\.venv$
 ^__pycache__$
-^\\.pyc$$
+\.pyc$
 ^dev$
+^extended$
 
-# qrtdown
+# qrtdown / website
 ^docs$
 ^\.quarto$
 ^_quarto\.yml$
@@ -14,21 +17,17 @@
 ^_qrtdown-styles\.css$
 ^_qrtdown$
 ^index\.qmd$
+^reference$
+^reference\.qmd$
 ^vignettes/articles$
 ^llms\.txt$
 ^_freeze$
-^\.github$
-^\.github$
-^doc$
-^Meta$
-^Experiments\.Rmd$
-^Experiments\.html$
-^__init__\.py$
-^\.github$
+
+# GitHub / release files
 ^\.github$
 ^cran-comments\.md$
 ^README\.qmd$
 
-# qrtdown
-^reference$
-^reference\.qmd$
+# Build artefacts
+^doc$
+^Meta$

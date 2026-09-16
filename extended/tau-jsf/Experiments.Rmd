@@ -1,0 +1,2472 @@
+---
+title: "Experiments"
+author: "Thanh Long Vu (Oliver)"
+date: "2026-08-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+
+setwd("/Users/olivervu25/Documents/gsoc/rjsf")
+
+Sys.setenv(
+  RETICULATE_PYTHON = "/Users/olivervu25/Documents/gsoc/rjsf/.venv/bin/python"
+)
+
+library(reticulate)
+devtools::load_all()
+```
+
+## Experiment Framing
+
+The experiments are grouped into three categories:
+
+* **Favourable / validation cases**
+
+  * Experiment 1: Standard SIR model
+  * Experiment 2: Independent birth-death process
+
+* **Partial success / trade-off case**
+
+  * Experiment 3: Weakly coupled two-species birth-death model
+
+* **Limitation / edge cases**
+
+  * Limitation Case 1: Time-dependent birth-death process
+  * Edge Case 2: Catalytic time-scale separation
+
+The goal is not to show that the current Jump-Tau-Flow prototype always works. Instead, the goal is to understand:
+
+1. when it reproduces the behaviour of exact SSA well,
+2. when it gives useful but incomplete approximations, and
+3. when coupling between the Jump, Tau, and Flow regimes begins to fail.
+
+Because all models considered here are stochastic, accuracy is assessed primarily using **ensemble-level behaviour over repeated simulations**, rather than by comparing individual stochastic trajectories.
+
+For all distributional comparisons, Exact SSA and JSF + Tau use **exactly the same histogram bin boundaries and bin widths**.
+
+For time-dependent comparisons, repeated simulations are evaluated on a common time grid. The plots show:
+
+* the ensemble mean trajectory, and
+* the 5th to 95th percentile simulation envelope.
+
+This gives a more meaningful comparison of the stochastic processes than comparing two arbitrary individual realizations.
+
+## Helper Functions
+
+```{r helper-functions}
+# Interpolate a simulated trajectory onto a common plotting grid.
+#
+# This is used only for ensemble summaries over time.
+path_on_grid <- function(out, species, grid) {
+  idx <- findInterval(grid, out$time)
+  idx[idx < 1] <- 1
+  idx[idx > length(out[[species]])] <- length(out[[species]])
+
+  out[[species]][idx]
+}
+
+# Summarise an ensemble of trajectories.
+#
+# Rows = simulation replicates
+# Columns = time points
+summarise_paths <- function(path_matrix) {
+  list(
+    mean = colMeans(path_matrix),
+    lower = apply(
+      path_matrix,
+      2,
+      quantile,
+      probs = 0.05,
+      na.rm = TRUE
+    ),
+    upper = apply(
+      path_matrix,
+      2,
+      quantile,
+      probs = 0.95,
+      na.rm = TRUE
+    )
+  )
+}
+
+
+plot_ensemble_comparison <- function(
+    grid,
+    exact_paths,
+    hybrid_paths,
+    ylab,
+    main
+) {
+
+  exact_summary <- summarise_paths(exact_paths)
+  hybrid_summary <- summarise_paths(hybrid_paths)
+
+  ylim <- range(
+    exact_summary$lower,
+    exact_summary$upper,
+    hybrid_summary$lower,
+    hybrid_summary$upper,
+    finite = TRUE
+  )
+
+  plot(
+    grid,
+    exact_summary$mean,
+    type = "n",
+    ylim = ylim,
+    xlab = "Time",
+    ylab = ylab,
+    main = main
+  )
+
+  polygon(
+    c(grid, rev(grid)),
+    c(exact_summary$lower, rev(exact_summary$upper)),
+    col = rgb(0, 0, 0, 0.15),
+    border = NA
+  )
+
+  polygon(
+    c(grid, rev(grid)),
+    c(hybrid_summary$lower, rev(hybrid_summary$upper)),
+    col = rgb(1, 0, 0, 0.15),
+    border = NA
+  )
+
+  lines(
+    grid,
+    exact_summary$mean,
+    lwd = 2
+  )
+
+  lines(
+    grid,
+    hybrid_summary$mean,
+    lwd = 2,
+    lty = 2,
+    col = "red"
+  )
+
+  legend(
+    "topright",
+    legend = c(
+      "Exact SSA mean",
+      "JSF + Tau mean"
+    ),
+    lty = c(1, 2),
+    lwd = 2,
+    col = c("black", "red"),
+    bty = "n"
+  )
+}
+
+# Construct one set of equally spaced histogram breaks
+# from the combined Exact SSA and JSF + Tau samples.
+#
+# Both histograms therefore have exactly the same bin width
+# and exactly the same bin boundaries.
+common_hist_breaks <- function(
+    exact_values,
+    hybrid_values,
+    n_bins = 20
+) {
+
+  all_values <- c(exact_values, hybrid_values)
+
+  lower <- min(all_values, na.rm = TRUE)
+  upper <- max(all_values, na.rm = TRUE)
+
+  if (lower == upper) {
+    lower <- lower - 0.5
+    upper <- upper + 0.5
+  }
+
+  seq(
+    from = lower,
+    to = upper,
+    length.out = n_bins + 1
+  )
+}
+```
+
+---
+
+# Experiment 1: Standard SIR Model
+
+## Goal
+
+This experiment tests whether the current Jump-Tau-Flow prototype behaves reasonably on a standard SIR epidemic model with moderate infection and recovery rates.
+
+This is intended as a favourable validation case because the system is coupled, but the propensities should not change too violently over a small time step.
+
+The hybrid method is compared against the exact SSA / Gillespie solver using repeated simulations.
+
+## Model
+
+The SIR model has three compartments:
+
+$$
+X(t) = (S(t), I(t), R(t)).
+$$
+
+The reactions are:
+
+$$
+S + I \rightarrow 2I
+$$
+
+and
+
+$$
+I \rightarrow R.
+$$
+
+The corresponding propensities are:
+
+$$
+a_1(X)
+=
+\beta \frac{SI}{N},
+$$
+
+and
+
+$$
+a_2(X)
+=
+\gamma I.
+$$
+
+## Rates and Simulation Parameters
+
+The numerical rate values used in this experiment are:
+
+| Quantity                   | Value | Meaning                               |
+| -------------------------- | ----: | ------------------------------------- |
+| \(\beta\)                  |   0.5 | Infection-rate parameter              |
+| \(\gamma\)                 |   0.1 | Recovery-rate parameter               |
+| \(N\)                      |  1000 | Total population                      |
+| \(S(0)\)                   |   990 | Initial susceptible population        |
+| \(I(0)\)                   |    10 | Initial infected population           |
+| \(R(0)\)                   |     0 | Initial recovered population          |
+| \(t_{\max}\)               |    20 | Simulation horizon                    |
+| Exact SSA `dt`             |   0.1 | Output / integration setting          |
+| Hybrid `dt`                |   0.1 | Hybrid time-step setting              |
+| Hybrid switching threshold |    10 | Jump / Tau / Flow switching threshold |
+| Hybrid Tau threshold       |   200 | Tau / Flow threshold                  |
+
+Therefore, for example, at any state \((S,I,R)\),
+
+$$
+a_{\text{infection}}
+=
+0.5\frac{SI}{1000},
+$$
+
+and
+
+$$
+a_{\text{recovery}}
+=
+0.1I.
+$$
+
+## Setup
+
+```{r sir-setup}
+rates_sir <- reticulate::py_eval(
+  "lambda x, t: [0.5 * x[0] * x[1] / 1000, 0.1 * x[1]]"
+)
+
+reactant_sir <- matrix(c(
+  1, 1, 0,   # infection: S + I -> 2I
+  0, 1, 0    # recovery:  I -> R
+), ncol = 3, byrow = TRUE)
+
+product_sir <- matrix(c(
+  0, 2, 0,   # infection
+  0, 0, 1    # recovery
+), ncol = 3, byrow = TRUE)
+```
+
+## Regime Usage Check
+
+The following run is used only to inspect which numerical regimes are activated by the hybrid implementation.
+
+It is an implementation diagnostic and is **not** used as evidence of statistical agreement with Exact SSA.
+
+```{r sir-regime-check}
+sir_log <- capture.output(
+  out_sir_debug <- jsf_simulate(
+    x0 = c(S = 990, I = 10, R = 0),
+    rates = rates_sir,
+    reactant = reactant_sir,
+    product = product_sir,
+    do_disc = c(0, 1, 0),
+    t_max = 20,
+    dt = 0.1,
+    switching_threshold = c(10, 10, 10),
+    tau_threshold = c(200, 200, 200),
+    species_names = c("S", "I", "R"),
+    method = "tau-operator-splitting",
+    tau_debug = TRUE,
+    tau_debug_every = 10,
+    tau_debug_max = 50
+  )
+)
+
+cat(sir_log, sep = "\n")
+
+sir_regime_usage <- data.frame(
+  mode = c(
+    "Tau appears",
+    "Jump appears",
+    "Flow appears"
+  ),
+  debug_steps = c(
+    sum(grepl("reactionMode=.*tau", sir_log)),
+    sum(grepl("reactionMode=.*jump", sir_log)),
+    sum(grepl("reactionMode=.*flow", sir_log))
+  )
+)
+
+sir_regime_usage
+```
+
+## Ensemble Comparison
+
+We use 100 independent simulations from each method.
+
+In addition to final-state summary statistics, infected-population trajectories are evaluated on the same time grid so that the ensemble mean and stochastic spread can be compared over time.
+
+```{r sir-ensemble}
+n_rep <- 500
+
+sir_grid <- seq(
+  from = 0,
+  to = 20,
+  by = 0.1
+)
+
+final_R_exact <- numeric(n_rep)
+final_R_hybrid <- numeric(n_rep)
+
+peak_I_exact <- numeric(n_rep)
+peak_I_hybrid <- numeric(n_rep)
+
+time_exact <- numeric(n_rep)
+time_hybrid <- numeric(n_rep)
+
+I_paths_exact <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(sir_grid)
+)
+
+I_paths_hybrid <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(sir_grid)
+)
+
+for (r in seq_len(n_rep)) {
+
+  t_exact <- system.time({
+    exact_r <- jsf_simulate(
+      x0 = c(S = 990, I = 10, R = 0),
+      rates = rates_sir,
+      reactant = reactant_sir,
+      product = product_sir,
+      do_disc = c(1, 1, 1),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(1e9, 1e9, 1e9),
+      species_names = c("S", "I", "R"),
+      method = "exact"
+    )
+  })
+
+  t_hybrid <- system.time({
+    hybrid_r <- jsf_simulate(
+      x0 = c(S = 990, I = 10, R = 0),
+      rates = rates_sir,
+      reactant = reactant_sir,
+      product = product_sir,
+      do_disc = c(0, 1, 0),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(10, 10, 10),
+      tau_threshold = c(200, 200, 200),
+      species_names = c("S", "I", "R"),
+      method = "tau-operator-splitting"
+    )
+  })
+
+  final_R_exact[r] <- tail(exact_r$R, 1)
+  final_R_hybrid[r] <- tail(hybrid_r$R, 1)
+
+  peak_I_exact[r] <- max(exact_r$I)
+  peak_I_hybrid[r] <- max(hybrid_r$I)
+
+  time_exact[r] <- t_exact["elapsed"]
+  time_hybrid[r] <- t_hybrid["elapsed"]
+
+  I_paths_exact[r, ] <- path_on_grid(
+    exact_r,
+    "I",
+    sir_grid
+  )
+
+  I_paths_hybrid[r, ] <- path_on_grid(
+    hybrid_r,
+    "I",
+    sir_grid
+  )
+}
+```
+
+## Ensemble Infected-Population Trajectory
+
+The solid and dashed lines show the ensemble means.
+
+The shaded regions show the 5th to 95th percentile simulation envelopes.
+
+```{r sir-ensemble-trajectory, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = sir_grid,
+  exact_paths = I_paths_exact,
+  hybrid_paths = I_paths_hybrid,
+  ylab = "Infected population",
+  main = "SIR: Ensemble Infected-Population Behaviour"
+)
+```
+
+## Summary Metrics
+
+```{r sir-summary}
+sir_summary <- data.frame(
+  method = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  mean_final_R = c(
+    mean(final_R_exact),
+    mean(final_R_hybrid)
+  ),
+  sd_final_R = c(
+    sd(final_R_exact),
+    sd(final_R_hybrid)
+  ),
+  mean_peak_I = c(
+    mean(peak_I_exact),
+    mean(peak_I_hybrid)
+  ),
+  sd_peak_I = c(
+    sd(peak_I_exact),
+    sd(peak_I_hybrid)
+  ),
+  mean_runtime_seconds = c(
+    mean(time_exact),
+    mean(time_hybrid)
+  )
+)
+
+sir_summary
+```
+
+## Error Against Exact SSA
+
+```{r sir-error}
+sir_error <- data.frame(
+  metric = c(
+    "Mean final R error",
+    "Relative mean final R error",
+    "Mean peak I error",
+    "Relative mean peak I error",
+    "Runtime ratio: hybrid / exact",
+    "Speed-up: exact / hybrid"
+  ),
+  value = c(
+    mean(final_R_hybrid) -
+      mean(final_R_exact),
+
+    (
+      mean(final_R_hybrid) -
+        mean(final_R_exact)
+    ) /
+      mean(final_R_exact),
+
+    mean(peak_I_hybrid) -
+      mean(peak_I_exact),
+
+    (
+      mean(peak_I_hybrid) -
+        mean(peak_I_exact)
+    ) /
+      mean(peak_I_exact),
+
+    mean(time_hybrid) /
+      mean(time_exact),
+
+    mean(time_exact) /
+      mean(time_hybrid)
+  )
+)
+
+sir_error
+```
+
+## Final-Size Distribution
+
+The same histogram breaks are calculated once from the combined Exact SSA and hybrid samples.
+
+Therefore, both histograms have identical bin boundaries and bin widths.
+
+```{r sir-final-distribution, fig.width=7, fig.height=5}
+sir_breaks <- common_hist_breaks(
+  final_R_exact,
+  final_R_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_R_exact,
+  breaks = sir_breaks,
+  xlim = range(sir_breaks),
+  xlab = "Final recovered population R(t_max)",
+  main = "SIR Final Size Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_R_hybrid,
+  breaks = sir_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Interpretation
+
+This experiment is a favourable validation case for the current Jump-Tau-Flow prototype.
+
+**What works well**
+
+* The hybrid method captures the main ensemble-level behaviour of Exact SSA.
+* The ensemble infected-population curves can be compared across the full simulation horizon rather than through two arbitrary individual realizations.
+* The mean final recovered population is close to Exact SSA.
+* The mean peak infected population is also close to Exact SSA.
+* The final-size distributions show substantial overlap.
+* The method gives a large runtime improvement compared with Exact SSA.
+* This suggests that the coupling behaves reasonably for a moderate nonlinear system when the time step is small.
+
+**What should be interpreted carefully**
+
+* Individual stochastic epidemic trajectories naturally vary between simulations.
+* Agreement should therefore be judged primarily through repeated-simulation statistics, ensemble trajectories, and distributions.
+* Similarity or dissimilarity between one Exact SSA realization and one hybrid realization would not provide strong evidence by itself.
+
+**Overall conclusion**
+
+This is a good validation case. The method performs well for a moderate coupled SIR model when evaluated using ensemble statistics and distributions. It suggests that the prototype can approximate the main epidemic-level behaviour while providing a substantial speed improvement.
+
+---
+
+# Experiment 2: Independent Birth-Death Process
+
+## Goal
+
+This experiment tests the Jump-Tau-Flow method on a simple one-species birth-death process.
+
+This is intended as a favourable sanity-check case because the model is low-dimensional and does not involve coupling between multiple species.
+
+## Model
+
+The system contains one species:
+
+$$
+X(t).
+$$
+
+The reactions are:
+
+$$
+\emptyset \rightarrow X
+$$
+
+and
+
+$$
+X \rightarrow \emptyset.
+$$
+
+The corresponding propensities are:
+
+$$
+a_1(X) = \lambda
+$$
+
+and
+
+$$
+a_2(X) = \mu X.
+$$
+
+## Rates and Simulation Parameters
+
+| Quantity                   | Value | Meaning                               |
+| -------------------------- | ----: | ------------------------------------- |
+| \(\lambda\)                |    20 | Constant birth rate                   |
+| \(\mu\)                    |   0.1 | Per-capita death rate                 |
+| \(X(0)\)                   |   100 | Initial population                    |
+| \(t_{\max}\)               |    20 | Simulation horizon                    |
+| Exact SSA `dt`             |   0.1 | Output / integration setting          |
+| Hybrid `dt`                |   0.1 | Hybrid time-step setting              |
+| Hybrid switching threshold |    10 | Jump / Tau / Flow switching threshold |
+| Hybrid Tau threshold       |   200 | Tau / Flow threshold                  |
+
+Thus the actual propensities used in the experiment are:
+
+$$
+a_{\text{birth}}(X)
+=
+20,
+$$
+
+and
+
+$$
+a_{\text{death}}(X)
+=
+0.1X.
+$$
+
+For example, when \(X=100\),
+
+$$
+a_{\text{birth}} = 20
+$$
+
+and
+
+$$
+a_{\text{death}}
+=
+0.1(100)
+=
+10.
+$$
+
+## Setup
+
+```{r bd-setup}
+rates_bd <- reticulate::py_eval(
+  "lambda x, t: [20.0, 0.1 * x[0]]"
+)
+
+reactant_bd <- matrix(c(
+  0,
+  1
+), ncol = 1, byrow = TRUE)
+
+product_bd <- matrix(c(
+  1,
+  0
+), ncol = 1, byrow = TRUE)
+```
+
+## Regime Usage Check
+
+This run is used only to inspect regime selection within the implementation.
+
+```{r bd-regime-check}
+bd_log <- capture.output(
+  out_bd_debug <- jsf_simulate(
+    x0 = c(X = 100),
+    rates = rates_bd,
+    reactant = reactant_bd,
+    product = product_bd,
+    do_disc = c(1),
+    t_max = 20,
+    dt = 0.1,
+    switching_threshold = c(10),
+    tau_threshold = c(200),
+    species_names = c("X"),
+    method = "tau-operator-splitting",
+    tau_debug = TRUE,
+    tau_debug_every = 10,
+    tau_debug_max = 50
+  )
+)
+
+cat(bd_log, sep = "\n")
+
+bd_regime_usage <- data.frame(
+  mode = c(
+    "Tau appears",
+    "Jump appears",
+    "Flow appears"
+  ),
+  debug_steps = c(
+    sum(grepl("reactionMode=.*tau", bd_log)),
+    sum(grepl("reactionMode=.*jump", bd_log)),
+    sum(grepl("reactionMode=.*flow", bd_log))
+  )
+)
+
+bd_regime_usage
+```
+
+## Ensemble Comparison
+
+```{r bd-ensemble}
+n_rep <- 500
+
+bd_grid <- seq(
+  from = 0,
+  to = 20,
+  by = 0.1
+)
+
+final_X_exact <- numeric(n_rep)
+final_X_hybrid <- numeric(n_rep)
+
+mean_X_exact_path <- numeric(n_rep)
+mean_X_hybrid_path <- numeric(n_rep)
+
+time_exact_bd <- numeric(n_rep)
+time_hybrid_bd <- numeric(n_rep)
+
+X_paths_exact_bd <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(bd_grid)
+)
+
+X_paths_hybrid_bd <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(bd_grid)
+)
+
+for (r in seq_len(n_rep)) {
+
+  t_exact <- system.time({
+    exact_r <- jsf_simulate(
+      x0 = c(X = 100),
+      rates = rates_bd,
+      reactant = reactant_bd,
+      product = product_bd,
+      do_disc = c(1),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(1e9),
+      species_names = c("X"),
+      method = "exact"
+    )
+  })
+
+  t_hybrid <- system.time({
+    hybrid_r <- jsf_simulate(
+      x0 = c(X = 100),
+      rates = rates_bd,
+      reactant = reactant_bd,
+      product = product_bd,
+      do_disc = c(1),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(10),
+      tau_threshold = c(200),
+      species_names = c("X"),
+      method = "tau-operator-splitting"
+    )
+  })
+
+  final_X_exact[r] <- tail(exact_r$X, 1)
+  final_X_hybrid[r] <- tail(hybrid_r$X, 1)
+  
+  time_exact_bd[r] <- t_exact["elapsed"]
+  time_hybrid_bd[r] <- t_hybrid["elapsed"]
+  
+  X_paths_exact_bd[r, ] <- path_on_grid(
+    exact_r,
+    "X",
+    bd_grid
+  )
+  
+  X_paths_hybrid_bd[r, ] <- path_on_grid(
+    hybrid_r,
+    "X",
+    bd_grid
+  )
+  
+  mean_X_exact_path[r] <- mean(X_paths_exact_bd[r, ])
+  mean_X_hybrid_path[r] <- mean(X_paths_hybrid_bd[r, ])
+}
+```
+
+## Ensemble Population Trajectory
+
+```{r bd-ensemble-trajectory, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = bd_grid,
+  exact_paths = X_paths_exact_bd,
+  hybrid_paths = X_paths_hybrid_bd,
+  ylab = "Population X",
+  main = "Birth-Death: Ensemble Population Behaviour"
+)
+```
+
+## Summary Metrics
+
+```{r bd-summary}
+bd_summary <- data.frame(
+  method = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  mean_final_X = c(
+    mean(final_X_exact),
+    mean(final_X_hybrid)
+  ),
+  sd_final_X = c(
+    sd(final_X_exact),
+    sd(final_X_hybrid)
+  ),
+  mean_path_average_X = c(
+    mean(mean_X_exact_path),
+    mean(mean_X_hybrid_path)
+  ),
+  sd_path_average_X = c(
+    sd(mean_X_exact_path),
+    sd(mean_X_hybrid_path)
+  ),
+  mean_runtime_seconds = c(
+    mean(time_exact_bd),
+    mean(time_hybrid_bd)
+  )
+)
+
+bd_summary
+```
+
+## Error Against Exact SSA
+
+```{r bd-error}
+bd_error <- data.frame(
+  metric = c(
+    "Mean final X error",
+    "Relative mean final X error",
+    "Mean path-average X error",
+    "Relative mean path-average X error",
+    "Runtime ratio: hybrid / exact",
+    "Speed-up: exact / hybrid"
+  ),
+  value = c(
+    mean(final_X_hybrid) -
+      mean(final_X_exact),
+
+    (
+      mean(final_X_hybrid) -
+        mean(final_X_exact)
+    ) /
+      mean(final_X_exact),
+
+    mean(mean_X_hybrid_path) -
+      mean(mean_X_exact_path),
+
+    (
+      mean(mean_X_hybrid_path) -
+        mean(mean_X_exact_path)
+    ) /
+      mean(mean_X_exact_path),
+
+    mean(time_hybrid_bd) /
+      mean(time_exact_bd),
+
+    mean(time_exact_bd) /
+      mean(time_hybrid_bd)
+  )
+)
+
+bd_error
+```
+
+## Final-State Distribution
+
+```{r bd-final-distribution, fig.width=7, fig.height=5}
+bd_breaks <- common_hist_breaks(
+  final_X_exact,
+  final_X_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_X_exact,
+  breaks = bd_breaks,
+  xlim = range(bd_breaks),
+  xlab = "Final population X(t_max)",
+  main = "Birth-Death Final State Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_X_hybrid,
+  breaks = bd_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Interpretation
+
+This experiment is a simple sanity check for the Tau-leaping component.
+
+**What works well**
+
+* The ensemble mean trajectory is close to Exact SSA.
+* The mean final population is close to Exact SSA.
+* The mean path-average population is also close to Exact SSA.
+* The final-state distributions can be directly compared using identical histogram bins.
+* The runtime improvement is strong.
+* This suggests that the Tau-leaping component behaves reasonably in a simple one-species system.
+
+**Limitations of this experiment**
+
+* This is not a full Jump-Tau-Flow coupling test.
+* Because there is only one species, both reactions follow the same species-level regime.
+* In this experiment, the debug output shows that the system remains in the Tau regime throughout the simulation.
+* Therefore, this experiment mainly validates the Tau component rather than interactions between Jump, Tau, and Flow.
+
+**Overall conclusion**
+
+This is useful as a Tau validation case, but it should not be presented as strong evidence for mixed-regime coupling. It shows that the Tau component can approximate Exact SSA reasonably well in a simple setting while providing faster computation.
+
+---
+
+# Experiment 3: Weakly Coupled Two-Species Birth-Death Model
+
+## Goal
+
+This experiment tests whether the hybrid method works when two species can evolve in different numerical regimes but are only weakly coupled.
+
+The system has two species:
+
+$$
+X(t) = (A(t),B(t)).
+$$
+
+Species \(A\) follows a birth-death process.
+
+Species \(B\) also follows a birth-death process, but its birth rate depends weakly on \(A\).
+
+This introduces coupling without extreme time-scale separation.
+
+## Model
+
+The reactions are:
+
+$$
+\emptyset \rightarrow A,
+$$
+
+$$
+A \rightarrow \emptyset,
+$$
+
+$$
+\emptyset \rightarrow B,
+$$
+
+and
+
+$$
+B \rightarrow \emptyset.
+$$
+
+The propensities are:
+
+$$
+a_1(X)=50,
+$$
+
+$$
+a_2(X)=0.1A,
+$$
+
+$$
+a_3(X)=10+0.02A,
+$$
+
+and
+
+$$
+a_4(X)=0.1B.
+$$
+
+The weak coupling appears in \(a_3(X)\), because the birth propensity of \(B\) depends on the current value of \(A\).
+
+## Rates and Simulation Parameters
+
+| Quantity                                 | Value | Meaning                                   |
+| ---------------------------------------- | ----: | ----------------------------------------- |
+| \(A\) birth rate                         |    50 | Constant birth propensity for \(A\)       |
+| \(A\) death coefficient                  |   0.1 | Gives death propensity \(0.1A\)           |
+| \(B\) baseline birth rate                |    10 | Baseline part of \(B\)'s birth propensity |
+| \(A \rightarrow B\) coupling coefficient |  0.02 | Gives coupling term \(0.02A\)             |
+| \(B\) death coefficient                  |   0.1 | Gives death propensity \(0.1B\)           |
+| \(A(0)\)                                 |   300 | Initial \(A\) population                  |
+| \(B(0)\)                                 |    80 | Initial \(B\) population                  |
+| \(t_{\max}\)                             |    20 | Simulation horizon                        |
+| Exact SSA `dt`                           |   0.1 | Output / integration setting              |
+| Hybrid `dt`                              |   0.1 | Hybrid time-step setting                  |
+| Hybrid switching threshold               |    20 | Jump / Tau / Flow switching threshold     |
+| Hybrid Tau threshold                     |   120 | Tau / Flow threshold                      |
+
+At the initial state \(A=300\) and \(B=80\), the four propensities are:
+
+$$
+a_1 = 50,
+$$
+
+$$
+a_2 = 0.1(300)=30,
+$$
+
+$$
+a_3 = 10+0.02(300)=16,
+$$
+
+and
+
+$$
+a_4 = 0.1(80)=8.
+$$
+
+This makes the numerical scale of each reaction explicit.
+
+## Setup
+
+```{r weak-setup}
+rates_weak <- reticulate::py_eval(
+  "lambda x, t: [50.0, 0.1 * x[0], 10.0 + 0.02 * x[0], 0.1 * x[1]]"
+)
+
+reactant_weak <- matrix(c(
+  0, 0,
+  1, 0,
+  0, 0,
+  0, 1
+), ncol = 2, byrow = TRUE)
+
+product_weak <- matrix(c(
+  1, 0,
+  0, 0,
+  0, 1,
+  0, 0
+), ncol = 2, byrow = TRUE)
+```
+
+## Regime Usage Check
+
+```{r weak-regime-check}
+weak_log <- capture.output(
+  out_weak_debug <- jsf_simulate(
+    x0 = c(A = 300, B = 80),
+    rates = rates_weak,
+    reactant = reactant_weak,
+    product = product_weak,
+    do_disc = c(0, 1),
+    t_max = 20,
+    dt = 0.1,
+    switching_threshold = c(20, 20),
+    tau_threshold = c(120, 120),
+    species_names = c("A", "B"),
+    method = "tau-operator-splitting",
+    tau_debug = TRUE,
+    tau_debug_every = 10,
+    tau_debug_max = 80
+  )
+)
+
+cat(weak_log, sep = "\n")
+
+weak_regime_usage <- data.frame(
+  mode = c(
+    "Tau appears",
+    "Jump appears",
+    "Flow appears"
+  ),
+  debug_steps = c(
+    sum(grepl("reactionMode=.*tau", weak_log)),
+    sum(grepl("reactionMode=.*jump", weak_log)),
+    sum(grepl("reactionMode=.*flow", weak_log))
+  )
+)
+
+weak_regime_usage
+```
+
+## Ensemble Comparison
+
+```{r weak-ensemble}
+n_rep <- 500
+
+weak_grid <- seq(
+  from = 0,
+  to = 20,
+  by = 0.1
+)
+
+final_A_exact <- numeric(n_rep)
+final_B_exact <- numeric(n_rep)
+
+final_A_hybrid <- numeric(n_rep)
+final_B_hybrid <- numeric(n_rep)
+
+time_exact_weak <- numeric(n_rep)
+time_hybrid_weak <- numeric(n_rep)
+
+A_paths_exact_weak <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(weak_grid)
+)
+
+A_paths_hybrid_weak <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(weak_grid)
+)
+
+B_paths_exact_weak <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(weak_grid)
+)
+
+B_paths_hybrid_weak <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(weak_grid)
+)
+
+for (r in seq_len(n_rep)) {
+
+  t_exact <- system.time({
+    exact_r <- jsf_simulate(
+      x0 = c(A = 300, B = 80),
+      rates = rates_weak,
+      reactant = reactant_weak,
+      product = product_weak,
+      do_disc = c(1, 1),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(1e9, 1e9),
+      species_names = c("A", "B"),
+      method = "exact"
+    )
+  })
+
+  t_hybrid <- system.time({
+    hybrid_r <- jsf_simulate(
+      x0 = c(A = 300, B = 80),
+      rates = rates_weak,
+      reactant = reactant_weak,
+      product = product_weak,
+      do_disc = c(0, 1),
+      t_max = 20,
+      dt = 0.1,
+      switching_threshold = c(20, 20),
+      tau_threshold = c(120, 120),
+      species_names = c("A", "B"),
+      method = "tau-operator-splitting"
+    )
+  })
+
+  final_A_exact[r] <- tail(exact_r$A, 1)
+  final_B_exact[r] <- tail(exact_r$B, 1)
+
+  final_A_hybrid[r] <- tail(hybrid_r$A, 1)
+  final_B_hybrid[r] <- tail(hybrid_r$B, 1)
+
+  time_exact_weak[r] <- t_exact["elapsed"]
+  time_hybrid_weak[r] <- t_hybrid["elapsed"]
+
+  A_paths_exact_weak[r, ] <- path_on_grid(
+    exact_r,
+    "A",
+    weak_grid
+  )
+
+  A_paths_hybrid_weak[r, ] <- path_on_grid(
+    hybrid_r,
+    "A",
+    weak_grid
+  )
+
+  B_paths_exact_weak[r, ] <- path_on_grid(
+    exact_r,
+    "B",
+    weak_grid
+  )
+
+  B_paths_hybrid_weak[r, ] <- path_on_grid(
+    hybrid_r,
+    "B",
+    weak_grid
+  )
+}
+```
+
+## Ensemble Behaviour of Species A
+
+```{r weak-A-ensemble-trajectory, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = weak_grid,
+  exact_paths = A_paths_exact_weak,
+  hybrid_paths = A_paths_hybrid_weak,
+  ylab = "Population A",
+  main = "Weakly Coupled Model: Ensemble Behaviour of A"
+)
+```
+
+## Ensemble Behaviour of Species B
+
+```{r weak-B-ensemble-trajectory, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = weak_grid,
+  exact_paths = B_paths_exact_weak,
+  hybrid_paths = B_paths_hybrid_weak,
+  ylab = "Population B",
+  main = "Weakly Coupled Model: Ensemble Behaviour of B"
+)
+```
+
+## Summary Metrics
+
+```{r weak-summary}
+weak_summary <- data.frame(
+  method = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  mean_final_A = c(
+    mean(final_A_exact),
+    mean(final_A_hybrid)
+  ),
+  sd_final_A = c(
+    sd(final_A_exact),
+    sd(final_A_hybrid)
+  ),
+  mean_final_B = c(
+    mean(final_B_exact),
+    mean(final_B_hybrid)
+  ),
+  sd_final_B = c(
+    sd(final_B_exact),
+    sd(final_B_hybrid)
+  ),
+  mean_runtime_seconds = c(
+    mean(time_exact_weak),
+    mean(time_hybrid_weak)
+  )
+)
+
+weak_summary
+```
+
+## Error Against Exact SSA
+
+```{r weak-error}
+weak_error <- data.frame(
+  metric = c(
+    "Mean final A error",
+    "Relative mean final A error",
+    "Mean final B error",
+    "Relative mean final B error",
+    "Runtime ratio: hybrid / exact",
+    "Speed-up: exact / hybrid"
+  ),
+  value = c(
+    mean(final_A_hybrid) -
+      mean(final_A_exact),
+
+    (
+      mean(final_A_hybrid) -
+        mean(final_A_exact)
+    ) /
+      mean(final_A_exact),
+
+    mean(final_B_hybrid) -
+      mean(final_B_exact),
+
+    (
+      mean(final_B_hybrid) -
+        mean(final_B_exact)
+    ) /
+      mean(final_B_exact),
+
+    mean(time_hybrid_weak) /
+      mean(time_exact_weak),
+
+    mean(time_exact_weak) /
+      mean(time_hybrid_weak)
+  )
+)
+
+weak_error
+```
+
+## Final-State Distribution for A
+
+```{r weak-final-A-distribution, fig.width=7, fig.height=5}
+weak_A_breaks <- common_hist_breaks(
+  final_A_exact,
+  final_A_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_A_exact,
+  breaks = weak_A_breaks,
+  xlim = range(weak_A_breaks),
+  xlab = "Final population A(t_max)",
+  main = "Weakly Coupled Model: Final A Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_A_hybrid,
+  breaks = weak_A_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Final-State Distribution for B
+
+```{r weak-final-B-distribution, fig.width=7, fig.height=5}
+weak_B_breaks <- common_hist_breaks(
+  final_B_exact,
+  final_B_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_B_exact,
+  breaks = weak_B_breaks,
+  xlim = range(weak_B_breaks),
+  xlab = "Final population B(t_max)",
+  main = "Weakly Coupled Model: Final B Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_B_hybrid,
+  breaks = weak_B_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Interpretation
+
+This experiment is a partial success case.
+
+**What works well**
+
+* The hybrid method captures the mean behaviour accurately.
+* The relative error in the final mean of \(A\) is small.
+* The relative error in the final mean of \(B\) is very small.
+* The ensemble mean trajectories are informative about agreement over the full time horizon.
+* The runtime improvement is large.
+* This example is more informative than the one-species birth-death experiment because the two species can occupy different numerical regimes.
+
+**What does not work well**
+
+* The hybrid method underestimates stochastic variability.
+* Species \(A\) is treated mostly as flow, so its dynamics become substantially less stochastic.
+* The standard deviation of final \(A\) is therefore much smaller under JSF + Tau than under Exact SSA.
+* The ensemble envelope for \(A\) should consequently be narrower.
+* The final distribution of \(B\) is also too narrow.
+* Because the birth rate of \(B\) depends on \(A\), reducing the variation in \(A\) propagates into the dynamics of \(B\).
+
+**Overall conclusion**
+
+This is not a complete failure, but it is also not a complete success. The method is effective for mean behaviour and runtime, but it loses distributional accuracy when an important species is approximated using the Flow regime. This demonstrates a central trade-off in the current prototype: computational speed and mean accuracy can be good even while stochastic variability is underestimated.
+
+---
+
+# Limitation Case 1: Time-Dependent Birth-Death Process
+
+## Goal
+
+This experiment tests a limitation case in which a propensity changes explicitly over time.
+
+This is important because the current Jump-Tau-Flow implementation evaluates propensities at particular points within its numerical steps.
+
+If the true propensity changes rapidly during a step, a frozen or insufficiently updated propensity can become inaccurate.
+
+## Model
+
+The system has one species \(X(t)\) and two reactions:
+
+$$
+\emptyset \rightarrow X
+$$
+
+and
+
+$$
+X \rightarrow \emptyset.
+$$
+
+The propensities are:
+
+$$
+a_1(X,t)
+=
+20 + 15\max(0,\sin(t))
+$$
+
+and
+
+$$
+a_2(X,t)
+=
+0.1X.
+$$
+
+## Rates and Simulation Parameters
+
+| Quantity                   | Value | Meaning                                    |
+| -------------------------- | ----: | ------------------------------------------ |
+| Baseline birth rate        |    20 | Minimum birth-rate contribution            |
+| Time-dependent amplitude   |    15 | Maximum additional birth-rate contribution |
+| Death coefficient          |   0.1 | Gives death propensity \(0.1X\)            |
+| \(X(0)\)                   |   100 | Initial population                         |
+| \(t_{\max}\)               |    30 | Simulation horizon                         |
+| Exact SSA `dt`             |   0.1 | Exact-method setting                       |
+| Hybrid `dt`                |   0.1 | Hybrid time-step setting                   |
+| Hybrid switching threshold |    10 | Jump / Tau / Flow switching threshold      |
+| Hybrid Tau threshold       |   200 | Tau / Flow threshold                       |
+
+The birth propensity therefore satisfies
+
+$$
+20
+\leq
+a_{\text{birth}}(t)
+\leq
+35.
+$$
+
+Specifically,
+
+$$
+a_{\text{birth}}(t)
+=
+20
+$$
+
+when \(\sin(t)\leq0\), while the maximum value is
+
+$$
+20+15=35.
+$$
+
+The death propensity is
+
+$$
+a_{\text{death}}(X)=0.1X.
+$$
+
+At the initial population \(X=100\), the initial death propensity is
+
+$$
+a_{\text{death}}(100)=10.
+$$
+
+## Setup
+
+```{r edge-time-bd-setup}
+rates_time_bd <- reticulate::py_eval(
+  "lambda x, t: [20.0 + 15.0 * max(0.0, __import__('math').sin(t)), 0.1 * x[0]]"
+)
+
+reactant_time_bd <- matrix(c(
+  0,
+  1
+), ncol = 1, byrow = TRUE)
+
+product_time_bd <- matrix(c(
+  1,
+  0
+), ncol = 1, byrow = TRUE)
+```
+
+## Regime Usage Check
+
+```{r edge-time-bd-regime-check}
+time_bd_log <- capture.output(
+  out_time_bd_debug <- jsf_simulate(
+    x0 = c(X = 100),
+    rates = rates_time_bd,
+    reactant = reactant_time_bd,
+    product = product_time_bd,
+    do_disc = c(1),
+    t_max = 30,
+    dt = 0.1,
+    switching_threshold = c(10),
+    tau_threshold = c(200),
+    species_names = c("X"),
+    method = "tau-operator-splitting",
+    tau_debug = TRUE,
+    tau_debug_every = 2,
+    tau_debug_max = 80
+  )
+)
+
+cat(time_bd_log, sep = "\n")
+
+time_bd_regime_usage <- data.frame(
+  mode = c(
+    "Tau appears",
+    "Jump appears",
+    "Flow appears"
+  ),
+  debug_steps = c(
+    sum(grepl("reactionMode=.*tau", time_bd_log)),
+    sum(grepl("reactionMode=.*jump", time_bd_log)),
+    sum(grepl("reactionMode=.*flow", time_bd_log))
+  )
+)
+
+time_bd_regime_usage
+```
+
+## Ensemble Comparison
+
+```{r edge-time-bd-ensemble}
+n_rep <- 500
+
+time_bd_grid <- seq(
+  from = 0,
+  to = 30,
+  by = 0.1
+)
+
+final_X_time_exact <- numeric(n_rep)
+final_X_time_hybrid <- numeric(n_rep)
+
+mean_X_time_exact_path <- numeric(n_rep)
+mean_X_time_hybrid_path <- numeric(n_rep)
+
+time_exact_time_bd <- numeric(n_rep)
+time_hybrid_time_bd <- numeric(n_rep)
+
+X_paths_exact_time_bd <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(time_bd_grid)
+)
+
+X_paths_hybrid_time_bd <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(time_bd_grid)
+)
+
+for (r in seq_len(n_rep)) {
+
+  t_exact <- system.time({
+    exact_r <- jsf_simulate(
+      x0 = c(X = 100),
+      rates = rates_time_bd,
+      reactant = reactant_time_bd,
+      product = product_time_bd,
+      do_disc = c(1),
+      t_max = 30,
+      dt = 0.1,
+      switching_threshold = c(1e9),
+      species_names = c("X"),
+      method = "exact"
+    )
+  })
+
+  t_hybrid <- system.time({
+    hybrid_r <- jsf_simulate(
+      x0 = c(X = 100),
+      rates = rates_time_bd,
+      reactant = reactant_time_bd,
+      product = product_time_bd,
+      do_disc = c(1),
+      t_max = 30,
+      dt = 0.1,
+      switching_threshold = c(10),
+      tau_threshold = c(200),
+      species_names = c("X"),
+      method = "tau-operator-splitting"
+    )
+  })
+
+  final_X_time_exact[r] <- tail(
+    exact_r$X,
+    1
+  )
+
+  final_X_time_hybrid[r] <- tail(
+    hybrid_r$X,
+    1
+  )
+
+  time_exact_time_bd[r] <- t_exact["elapsed"]
+  time_hybrid_time_bd[r] <- t_hybrid["elapsed"]
+  
+  X_paths_exact_time_bd[r, ] <- path_on_grid(
+    exact_r,
+    "X",
+    time_bd_grid
+  )
+  
+  X_paths_hybrid_time_bd[r, ] <- path_on_grid(
+    hybrid_r,
+    "X",
+    time_bd_grid
+  )
+  
+  mean_X_time_exact_path[r] <- mean(
+    X_paths_exact_time_bd[r, ]
+  )
+  
+  mean_X_time_hybrid_path[r] <- mean(
+    X_paths_hybrid_time_bd[r, ]
+  )
+}
+```
+
+## Ensemble Population Trajectory
+
+```{r edge-time-bd-ensemble-trajectory, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = time_bd_grid,
+  exact_paths = X_paths_exact_time_bd,
+  hybrid_paths = X_paths_hybrid_time_bd,
+  ylab = "Population X",
+  main = "Time-Dependent Birth-Death: Ensemble Behaviour"
+)
+```
+
+## Summary Metrics
+
+```{r edge-time-bd-summary}
+time_bd_summary <- data.frame(
+  method = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  mean_final_X = c(
+    mean(final_X_time_exact),
+    mean(final_X_time_hybrid)
+  ),
+  sd_final_X = c(
+    sd(final_X_time_exact),
+    sd(final_X_time_hybrid)
+  ),
+  mean_path_average_X = c(
+    mean(mean_X_time_exact_path),
+    mean(mean_X_time_hybrid_path)
+  ),
+  sd_path_average_X = c(
+    sd(mean_X_time_exact_path),
+    sd(mean_X_time_hybrid_path)
+  ),
+  mean_runtime_seconds = c(
+    mean(time_exact_time_bd),
+    mean(time_hybrid_time_bd)
+  )
+)
+
+time_bd_summary
+```
+
+## Error Against Exact SSA
+
+```{r edge-time-bd-error}
+time_bd_error <- data.frame(
+  metric = c(
+    "Mean final X error",
+    "Relative mean final X error",
+    "Mean path-average X error",
+    "Relative mean path-average X error",
+    "Runtime ratio: hybrid / exact",
+    "Speed-up: exact / hybrid"
+  ),
+  value = c(
+    mean(final_X_time_hybrid) -
+      mean(final_X_time_exact),
+
+    (
+      mean(final_X_time_hybrid) -
+        mean(final_X_time_exact)
+    ) /
+      mean(final_X_time_exact),
+
+    mean(mean_X_time_hybrid_path) -
+      mean(mean_X_time_exact_path),
+
+    (
+      mean(mean_X_time_hybrid_path) -
+        mean(mean_X_time_exact_path)
+    ) /
+      mean(mean_X_time_exact_path),
+
+    mean(time_hybrid_time_bd) /
+      mean(time_exact_time_bd),
+
+    mean(time_exact_time_bd) /
+      mean(time_hybrid_time_bd)
+  )
+)
+
+time_bd_error
+```
+
+## Final-State Distribution
+
+```{r edge-time-bd-final-distribution, fig.width=7, fig.height=5}
+time_bd_breaks <- common_hist_breaks(
+  final_X_time_exact,
+  final_X_time_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_X_time_exact,
+  breaks = time_bd_breaks,
+  xlim = range(time_bd_breaks),
+  xlab = "Final population X(t_max)",
+  main = "Time-Dependent Birth-Death Final State Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_X_time_hybrid,
+  breaks = time_bd_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Interpretation
+
+This experiment is a limitation case rather than a complete failure.
+
+**What works well**
+
+* The mean final population remains reasonably close to Exact SSA.
+* The mean path-average population also remains reasonably close.
+* The ensemble mean trajectory captures part of the overall time-dependent behaviour.
+* The runtime improvement is substantial.
+* This means the hybrid method can still capture aspects of average behaviour even when the birth rate changes over time.
+
+**What does not work well**
+
+* The final-state distribution is substantially narrower under JSF + Tau.
+* The method strongly underestimates stochastic variability.
+* The standard deviation of the final population is much smaller than under Exact SSA.
+* This should also be visible through a narrower ensemble simulation envelope.
+* The debug output indicates that the system starts in the Tau regime and later switches into the Flow regime.
+* Once the process enters the Flow regime, much of its stochastic variation is removed.
+
+**Why this matters**
+
+* The birth propensity changes explicitly with time between 20 and 35.
+* The hybrid method uses a reduced time step of \(dt=0.1\) in this experiment.
+* Propensity values may therefore change materially over the duration of an accepted step.
+* Even if ensemble means remain reasonably close, the resulting stochastic distribution may be inaccurate.
+
+**Overall conclusion**
+
+This case shows that the method can preserve some aspects of the mean behaviour while failing to preserve the complete stochastic distribution when propensities change over time and the process enters the Flow regime. This is an important limitation of the current implementation.
+
+---
+
+# Edge Case 2: Catalytic Time-Scale Separation
+
+## Goal
+
+This experiment tests a stronger edge case in which one species evolves slowly and discretely while another species evolves quickly.
+
+This type of time-scale separation is difficult for hybrid coupling.
+
+The concern is that a Jump component may schedule an event using propensity information from one point in time while a Tau or Flow component changes the state substantially before that event occurs.
+
+This can create decoupling between the numerical regimes.
+
+## Model
+
+The system contains two species:
+
+$$
+C(t),X(t),
+$$
+
+where \(C\) is the slow species and \(X\) is the fast species.
+
+The reactions are:
+
+$$
+C \rightarrow C+X,
+$$
+
+$$
+X \rightarrow \emptyset,
+$$
+
+and
+
+$$
+X \rightarrow X+C.
+$$
+
+The corresponding propensities are:
+
+$$
+a_1(C,X)
+=
+0.5C,
+$$
+
+$$
+a_2(C,X)
+=
+2X,
+$$
+
+and
+
+$$
+a_3(C,X)
+=
+0.02X.
+$$
+
+Here \(X\) can change quickly because its degradation propensity has coefficient 2.
+
+The slow species \(C\) is also affected by \(X\), so errors in the fast component can propagate into the slow component.
+
+## Rates and Simulation Parameters
+
+| Quantity                          | Value | Meaning                               |
+| --------------------------------- | ----: | ------------------------------------- |
+| \(C \rightarrow C+X\) coefficient |   0.5 | Propensity \(0.5C\)                   |
+| \(X\) degradation coefficient     |   2.0 | Propensity \(2X\)                     |
+| \(X \rightarrow X+C\) coefficient |  0.02 | Propensity \(0.02X\)                  |
+| \(C(0)\)                          |     5 | Initial slow-species population       |
+| \(X(0)\)                          |   200 | Initial fast-species population       |
+| \(t_{\max}\)                      |    10 | Simulation horizon                    |
+| Exact SSA `dt`                    |  0.05 | Exact-method setting                  |
+| Hybrid `dt`                       |  0.05 | Hybrid time-step setting              |
+| Hybrid switching threshold        |    20 | Jump / Tau / Flow switching threshold |
+| Hybrid Tau threshold              |   100 | Tau / Flow threshold                  |
+
+At the initial state
+
+$$
+C=5,
+\qquad
+X=200,
+$$
+
+the reaction propensities are:
+
+$$
+a_1
+=
+0.5(5)
+=
+2.5,
+$$
+
+$$
+a_2
+=
+2(200)
+=
+400,
+$$
+
+and
+
+$$
+a_3
+=
+0.02(200)
+=
+4.
+$$
+
+This explicitly demonstrates the time-scale separation.
+
+The degradation reaction for \(X\) initially has propensity 400, compared with propensities 2.5 and 4 for the two other reactions.
+
+Therefore, \(X\) can change extremely rapidly early in the simulation.
+
+## Setup
+
+```{r edge-catalytic-setup}
+rates_cat <- reticulate::py_eval(
+  "lambda x, t: [0.5 * x[0], 2.0 * x[1], 0.02 * x[1]]"
+)
+
+reactant_cat <- matrix(c(
+  1, 0,
+  0, 1,
+  0, 1
+), ncol = 2, byrow = TRUE)
+
+product_cat <- matrix(c(
+  1, 1,
+  0, 0,
+  1, 1
+), ncol = 2, byrow = TRUE)
+```
+
+## Regime Usage Check
+
+```{r edge-catalytic-regime-check}
+cat_log <- capture.output(
+  out_cat_debug <- jsf_simulate(
+    x0 = c(C = 5, X = 200),
+    rates = rates_cat,
+    reactant = reactant_cat,
+    product = product_cat,
+    do_disc = c(1, 0),
+    t_max = 10,
+    dt = 0.05,
+    switching_threshold = c(20, 20),
+    tau_threshold = c(100, 100),
+    species_names = c("C", "X"),
+    method = "tau-operator-splitting",
+    tau_debug = TRUE,
+    tau_debug_every = 1,
+    tau_debug_max = 80
+  )
+)
+
+cat(cat_log, sep = "\n")
+
+cat_regime_usage <- data.frame(
+  mode = c(
+    "Tau appears",
+    "Jump appears",
+    "Flow appears"
+  ),
+  debug_steps = c(
+    sum(grepl("reactionMode=.*tau", cat_log)),
+    sum(grepl("reactionMode=.*jump", cat_log)),
+    sum(grepl("reactionMode=.*flow", cat_log))
+  )
+)
+
+cat_regime_usage
+```
+
+## Ensemble Comparison
+
+```{r edge-catalytic-ensemble}
+n_rep <- 500
+
+cat_grid <- seq(
+  from = 0,
+  to = 10,
+  by = 0.05
+)
+
+final_C_exact <- numeric(n_rep)
+final_X_exact <- numeric(n_rep)
+
+final_C_hybrid <- numeric(n_rep)
+final_X_hybrid <- numeric(n_rep)
+
+max_C_exact <- numeric(n_rep)
+max_C_hybrid <- numeric(n_rep)
+
+time_exact_cat <- numeric(n_rep)
+time_hybrid_cat <- numeric(n_rep)
+
+C_paths_exact_cat <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(cat_grid)
+)
+
+C_paths_hybrid_cat <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(cat_grid)
+)
+
+X_paths_exact_cat <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(cat_grid)
+)
+
+X_paths_hybrid_cat <- matrix(
+  NA_real_,
+  nrow = n_rep,
+  ncol = length(cat_grid)
+)
+
+for (r in seq_len(n_rep)) {
+
+  t_exact <- system.time({
+    exact_r <- jsf_simulate(
+      x0 = c(C = 5, X = 200),
+      rates = rates_cat,
+      reactant = reactant_cat,
+      product = product_cat,
+      do_disc = c(1, 1),
+      t_max = 10,
+      dt = 0.05,
+      switching_threshold = c(1e9, 1e9),
+      species_names = c("C", "X"),
+      method = "exact"
+    )
+  })
+
+  t_hybrid <- system.time({
+    hybrid_r <- jsf_simulate(
+      x0 = c(C = 5, X = 200),
+      rates = rates_cat,
+      reactant = reactant_cat,
+      product = product_cat,
+      do_disc = c(1, 0),
+      t_max = 10,
+      dt = 0.05,
+      switching_threshold = c(20, 20),
+      tau_threshold = c(100, 100),
+      species_names = c("C", "X"),
+      method = "tau-operator-splitting"
+    )
+  })
+
+  final_C_exact[r] <- tail(exact_r$C, 1)
+  final_X_exact[r] <- tail(exact_r$X, 1)
+
+  final_C_hybrid[r] <- tail(hybrid_r$C, 1)
+  final_X_hybrid[r] <- tail(hybrid_r$X, 1)
+
+  max_C_exact[r] <- max(exact_r$C)
+  max_C_hybrid[r] <- max(hybrid_r$C)
+
+  time_exact_cat[r] <- t_exact["elapsed"]
+  time_hybrid_cat[r] <- t_hybrid["elapsed"]
+
+  C_paths_exact_cat[r, ] <- path_on_grid(
+    exact_r,
+    "C",
+    cat_grid
+  )
+
+  C_paths_hybrid_cat[r, ] <- path_on_grid(
+    hybrid_r,
+    "C",
+    cat_grid
+  )
+
+  X_paths_exact_cat[r, ] <- path_on_grid(
+    exact_r,
+    "X",
+    cat_grid
+  )
+
+  X_paths_hybrid_cat[r, ] <- path_on_grid(
+    hybrid_r,
+    "X",
+    cat_grid
+  )
+}
+```
+
+## Ensemble Behaviour of Slow Species C
+
+```{r edge-catalytic-C-ensemble, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = cat_grid,
+  exact_paths = C_paths_exact_cat,
+  hybrid_paths = C_paths_hybrid_cat,
+  ylab = "Population C",
+  main = "Catalytic Edge Case: Ensemble Behaviour of C"
+)
+```
+
+## Ensemble Behaviour of Fast Species X
+
+```{r edge-catalytic-X-ensemble, fig.width=7, fig.height=5}
+plot_ensemble_comparison(
+  grid = cat_grid,
+  exact_paths = X_paths_exact_cat,
+  hybrid_paths = X_paths_hybrid_cat,
+  ylab = "Population X",
+  main = "Catalytic Edge Case: Ensemble Behaviour of X"
+)
+```
+
+## Summary Metrics
+
+```{r edge-catalytic-summary}
+cat_summary <- data.frame(
+  method = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  mean_final_C = c(
+    mean(final_C_exact),
+    mean(final_C_hybrid)
+  ),
+  sd_final_C = c(
+    sd(final_C_exact),
+    sd(final_C_hybrid)
+  ),
+  mean_final_X = c(
+    mean(final_X_exact),
+    mean(final_X_hybrid)
+  ),
+  sd_final_X = c(
+    sd(final_X_exact),
+    sd(final_X_hybrid)
+  ),
+  mean_max_C = c(
+    mean(max_C_exact),
+    mean(max_C_hybrid)
+  ),
+  mean_runtime_seconds = c(
+    mean(time_exact_cat),
+    mean(time_hybrid_cat)
+  )
+)
+
+cat_summary
+```
+
+## Error Against Exact SSA
+
+```{r edge-catalytic-error}
+cat_error <- data.frame(
+  metric = c(
+    "Mean final C error",
+    "Relative mean final C error",
+    "Mean final X error",
+    "Relative mean final X error",
+    "Mean max C error",
+    "Relative mean max C error",
+    "Runtime ratio: hybrid / exact",
+    "Speed-up: exact / hybrid"
+  ),
+  value = c(
+    mean(final_C_hybrid) -
+      mean(final_C_exact),
+
+    (
+      mean(final_C_hybrid) -
+        mean(final_C_exact)
+    ) /
+      mean(final_C_exact),
+
+    mean(final_X_hybrid) -
+      mean(final_X_exact),
+
+    (
+      mean(final_X_hybrid) -
+        mean(final_X_exact)
+    ) /
+      mean(final_X_exact),
+
+    mean(max_C_hybrid) -
+      mean(max_C_exact),
+
+    (
+      mean(max_C_hybrid) -
+        mean(max_C_exact)
+    ) /
+      mean(max_C_exact),
+
+    mean(time_hybrid_cat) /
+      mean(time_exact_cat),
+
+    mean(time_exact_cat) /
+      mean(time_hybrid_cat)
+  )
+)
+
+cat_error
+```
+
+## Final C Distribution
+
+```{r edge-catalytic-final-C-distribution, fig.width=7, fig.height=5}
+cat_C_breaks <- common_hist_breaks(
+  final_C_exact,
+  final_C_hybrid,
+  n_bins = 20
+)
+
+hist(
+  final_C_exact,
+  breaks = cat_C_breaks,
+  xlim = range(cat_C_breaks),
+  xlab = "Final population C(t_max)",
+  main = "Catalytic Edge Case: Final C Distribution",
+  col = rgb(0, 0, 0, 0.3)
+)
+
+hist(
+  final_C_hybrid,
+  breaks = cat_C_breaks,
+  col = rgb(1, 0, 0, 0.3),
+  add = TRUE
+)
+
+legend(
+  "topright",
+  legend = c(
+    "Exact SSA",
+    "JSF + Tau"
+  ),
+  fill = c(
+    rgb(0, 0, 0, 0.3),
+    rgb(1, 0, 0, 0.3)
+  ),
+  bty = "n"
+)
+```
+
+## Interpretation
+
+This experiment is the strongest edge case considered here.
+
+**What works well**
+
+* The hybrid method captures the broad qualitative behaviour of the fast species \(X\).
+* The ensemble results from both methods show that \(X\) decreases rapidly from its large initial population.
+* The method remains substantially faster than Exact SSA.
+
+**What does not work well**
+
+* The slow species \(C\) is not captured as accurately.
+* The mean final value of \(C\) is lower under JSF + Tau than under Exact SSA.
+* The relative error in final \(C\) is much larger than in the favourable cases.
+* The final distribution of \(C\) is too narrow.
+* Exact SSA produces a wider distribution and can reach larger final values of \(C\).
+* JSF + Tau misses part of this upper tail.
+* The ensemble envelope provides a more informative demonstration of this discrepancy than comparison of individual sample paths.
+
+**Why this matters**
+
+At the initial state,
+
+$$
+a_1 = 2.5,
+\qquad
+a_2 = 400,
+\qquad
+a_3 = 4.
+$$
+
+Therefore, the fast degradation reaction is initially roughly two orders of magnitude faster than the other reactions.
+
+The model consequently contains:
+
+* a slow species \(C\),
+* a rapidly changing species \(X\),
+* and a reaction changing \(C\) whose propensity depends directly on \(X\).
+
+As \(X\) changes extremely rapidly, propensity information involving \(X\) can become outdated during the hybrid evolution.
+
+This creates a potential decoupling between the slow Jump component and the fast Tau or Flow component.
+
+**Overall conclusion**
+
+This is the clearest edge case considered so far. It shows that the current method can fail when a slow Jump species depends on a rapidly changing species. The method remains computationally attractive, but it loses accuracy in both the mean and distribution of the slow species. This motivates a more dynamic coupling mechanism, such as a jump-clock-style update, that can account for changing propensities during a step.
+
+---
+
+# Overall Summary
+
+Across these experiments, the current Jump-Tau-Flow prototype shows a clear trade-off between computational efficiency and preservation of the full stochastic distribution.
+
+## What the Method Does Well
+
+* It can reproduce ensemble means reasonably well in favourable settings.
+* It works well on the moderate SIR example.
+* It gives reasonable mean accuracy for the simple birth-death process.
+* It can handle weak coupling when the primary target is mean behaviour.
+* It is substantially faster than Exact SSA across the experiments.
+* It can therefore be useful as a fast approximation when exact preservation of stochastic variability is not essential.
+
+## Main Limitations
+
+* The method can underestimate stochastic variability.
+* Species treated in the Flow regime can become almost deterministic relative to Exact SSA.
+* When another species depends on a Flow-regime species, this reduction in variability can propagate through the system.
+* Time-dependent propensities can create difficulties when they change materially during a hybrid step.
+* The method is particularly weak when a slow Jump process depends on a rapidly changing Tau or Flow species.
+
+## Importance of Ensemble-Level Evaluation
+
+Because the models are stochastic, comparisons between one Exact SSA trajectory and one JSF + Tau trajectory are not reliable measures of accuracy.
+
+Two correct realizations of the same stochastic model can look substantially different.
+
+Therefore, the experiments here focus on:
+
+* repeated simulations,
+* ensemble mean trajectories,
+* 5th to 95th percentile simulation envelopes,
+* final-state distributions,
+* means and standard deviations,
+* relative errors,
+* and runtime comparisons.
+
+Histograms comparing Exact SSA and JSF + Tau are constructed using the same breaks, which ensures that the bin width and bin boundaries are identical within each comparison.
+
+## Main Failure Mode
+
+The strongest issue appears under time-scale separation.
+
+In particular, difficulties arise when a slow Jump process depends on a fast-changing species.
+
+If the fast species changes substantially while the Jump calculation still depends on earlier propensity information, the numerical regimes can become decoupled.
+
+The consequences can include:
+
+* biased ensemble means,
+* overly narrow distributions,
+* underestimated stochastic variability,
+* or a combination of these effects.
+
+## Final Conclusion
+
+The current Jump-Tau-Flow prototype is promising as a fast hybrid approximation method, particularly for favourable systems where the main goal is to reproduce average behaviour efficiently.
+
+However, it does not always preserve the complete stochastic distribution.
+
+The central limitation identified by these experiments is the coupling between slow Jump dynamics and rapidly changing Tau or Flow dynamics.
+
+The results therefore support the development of a more dynamic coupling mechanism, such as a jump-clock-style update that accounts for changing propensities during each step.
+
+
+```{r}
+# Growing birth-death process
+rates <- reticulate::py_eval(
+  "lambda x, t: [0.4 * x[0], 0.1 * x[0]]"
+)
+
+reactant <- matrix(c(
+  1,   # birth: X -> 2X
+  1    # death: X -> 0
+), ncol = 1)
+
+product <- matrix(c(
+  2,
+  0
+), ncol = 1)
+
+out <- jsf_simulate(
+  x0 = c(X = 5),
+  rates = rates,
+  reactant = reactant,
+  product = product,
+  do_disc = c(1),
+  t_max = 15,
+  dt = 0.05,
+  switching_threshold = c(20),
+  species_names = "X"
+)
+
+plot(
+  out$time, out$X,
+  type = "l",
+  lwd = 2,
+  xlab = "Time",
+  ylab = "Population X",
+  main = "Jump-Switch-Flow Simulation"
+)
+
+abline(h = 20, lty = 2)
+```
