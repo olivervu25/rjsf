@@ -2,9 +2,9 @@
   {
     "objectID": "NEWS.html",
     "href": "NEWS.html",
-    "title": "rjsf 0.0.0.9000",
+    "title": "rjsf 0.1.0",
     "section": "",
-    "text": "rjsf 0.0.0.9000\n\nAdded initial R package skeleton.\nAdded reticulate bridge to Python jsf.\nAdded Lotka-Volterra and SIR examples.\nAdded general jsf_simulate() wrapper.\nAdded initial JSFResult S7 class, constructor, converter, print, and summary methods."
+    "text": "rjsf 0.1.0\n\nAdded initial R package skeleton.\nAdded reticulate bridge to Python jsf.\nAdded Lotka-Volterra and SIR examples.\nAdded general jsf_simulate() wrapper.\nAdded initial JSFResult S7 class, constructor, converter, print, and summary methods."
   },
   {
     "objectID": "_qrtdown/citation.html",
