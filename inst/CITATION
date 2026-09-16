@@ -7,9 +7,19 @@ citHeader(
 bibentry(
   bibtype = "Manual",
   title = "{rjsf}: An R Interface to the Jump-Switch-Flow Simulator",
-  author = person(
-    given = "Thanh Long",
-    family = "Vu"
+  author = c(
+    person(
+      given = "Thanh Long",
+      family = "Vu"
+    ),
+    person(
+      given = "Domenic",
+      family = "Germano"
+    ),
+    person(
+      given = "Michael",
+      family = "Lydeamore"
+    )
   ),
   year = "2026",
   note = "R package version 0.1.0",
