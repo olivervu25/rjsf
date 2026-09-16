@@ -9,7 +9,13 @@ The main function is `jsf_simulate()`, which lets users define compartmental rea
 
 ## Installation
 
-You can install the development version of `rjsf` from GitHub with:
+Once available on CRAN, you can install the released version of `rjsf` with:
+
+```r
+install.packages("rjsf")
+```
+
+You can install the development version from GitHub with:
 
 ```r
 # install.packages("pak")
@@ -28,7 +34,7 @@ source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install numpy scipy pandas matplotlib python-libsbml
-python -m pip install git+https://github.com/DGermano8/jsf.git
+python -m pip install git+https://github.com/DGermano8/jsf
 ```
 
 Then in R, point `reticulate` to that environment:
@@ -70,7 +76,7 @@ py_install(
 )
 
 py_install(
-  packages = "git+https://github.com/DGermano8/jsf.git",
+  packages = "git+https://github.com/DGermano8/jsf",
   envname = "rjsf-env",
   method = "virtualenv",
   pip = TRUE
