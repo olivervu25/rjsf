@@ -21,15 +21,127 @@
     "text": "@Manual{,\n  title = {{rjsf}: An R Interface to the Jump-Switch-Flow Simulator},\n  author = {Thanh Long Vu and Domenic Germano and Michael Lydeamore},\n  year = {2026},\n  note = {R package version 0.1.0},\n  url = {https://github.com/olivervu25/rjsf},\n}\n@Article{,\n  title = {A hybrid framework for compartmental models enabling simulation-based inference},\n  author = {Domenic P. J. Germano and Alexander E. Zarebski and Sophie Hautphenne and Robert Moss and Jennifer A. Flegg and Mark B. Flegg},\n  journal = {Journal of Mathematical Biology},\n  year = {2026},\n  volume = {92},\n  pages = {93},\n  doi = {10.1007/s00285-026-02409-y},\n}"
   },
   {
-    "objectID": "_qrtdown/reference.html",
-    "href": "_qrtdown/reference.html",
+    "objectID": "reference/new_jsf_result.html",
+    "href": "reference/new_jsf_result.html",
+    "title": "new_jsf_result",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/new_jsf_result.html#usage",
+    "href": "reference/new_jsf_result.html#usage",
+    "title": "new_jsf_result",
+    "section": "Usage",
+    "text": "Usage\nnew_jsf_result(\n  time,\n  state,\n  species_names = names(state),\n  method = \"operator-splitting\",\n  config = list()\n)"
+  },
+  {
+    "objectID": "reference/new_jsf_result.html#arguments",
+    "href": "reference/new_jsf_result.html#arguments",
+    "title": "new_jsf_result",
+    "section": "Arguments",
+    "text": "Arguments\n\n\n\n\n\n\n\nArgument\nDescription\n\n\n\n\ntime\nNumeric vector of simulation times.\n\n\nstate\nData frame of state trajectories.\n\n\nspecies_names\nCharacter vector of species names. Defaults to the column names of state.\n\n\nmethod\nJSF simulation method used.\n\n\nconfig\nList of simulation configuration values."
+  },
+  {
+    "objectID": "reference/new_jsf_result.html#value",
+    "href": "reference/new_jsf_result.html#value",
+    "title": "new_jsf_result",
+    "section": "Value",
+    "text": "Value\nA JSFResult object."
+  },
+  {
+    "objectID": "reference/new_jsf_result.html#examples",
+    "href": "reference/new_jsf_result.html#examples",
+    "title": "new_jsf_result",
+    "section": "Examples",
+    "text": "Examples\nstate &lt;- data.frame(\n  prey = c(50, 51, 52),\n  predator = c(10, 9, 9)\n)\n\nresult &lt;- new_jsf_result(\n  time = c(0, 0.1, 0.2),\n  state = state,\n  config = list(dt = 0.1)\n)\n\nresult\nsummary(result)"
+  },
+  {
+    "objectID": "reference/jsf_simulate.html",
+    "href": "reference/jsf_simulate.html",
+    "title": "jsf_simulate",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/jsf_simulate.html#usage",
+    "href": "reference/jsf_simulate.html#usage",
+    "title": "jsf_simulate",
+    "section": "Usage",
+    "text": "Usage\njsf_simulate(\n  x0,\n  rates,\n  reactant,\n  product,\n  do_disc,\n  t_max,\n  dt,\n  switching_threshold,\n  tau_threshold = NULL,\n  tau_epsilon = 0.03,\n  critical_threshold = 10,\n  tau_debug = FALSE,\n  tau_debug_every = 20,\n  tau_debug_max = 30,\n  species_names = NULL,\n  enforce_do = NULL,\n  method = \"operator-splitting\",\n  return_type = c(\"data.frame\", \"JSFResult\")\n)"
+  },
+  {
+    "objectID": "reference/jsf_simulate.html#arguments",
+    "href": "reference/jsf_simulate.html#arguments",
+    "title": "jsf_simulate",
+    "section": "Arguments",
+    "text": "Arguments\n\n\n\n\n\n\n\nArgument\nDescription\n\n\n\n\nx0\nNumeric vector of initial states.\n\n\nrates\nPython callable rate function, usually created with reticulate::py_eval().\n\n\nreactant\nMatrix where each row gives the reactants for one reaction.\n\n\nproduct\nMatrix where each row gives the products for one reaction.\n\n\ndo_disc\nInteger vector indicating which species may be treated discretely/stochastically.\n\n\nt_max\nFinal simulation time.\n\n\ndt\nTime step for the continuous/ODE part of JSF.\n\n\nswitching_threshold\nSwitching threshold. Can be a scalar or one value per species.\n\n\ntau_threshold\nThreshold controlling when species are handled by the tau-leaping component. May be NULL, a scalar, or one value per species. If NULL, defaults to switching_threshold.\n\n\ntau_epsilon\nPositive numeric scalar specifying the tau-leaping epsilon parameter passed to the Python JSF backend.\n\n\ncritical_threshold\nNon-negative numeric scalar specifying the critical-reaction threshold passed to the Python JSF backend.\n\n\ntau_debug\nLogical. If TRUE, enables diagnostic output from the tau-leaping simulator.\n\n\ntau_debug_every\nInteger controlling how often tau-leaping diagnostic information is printed.\n\n\ntau_debug_max\nInteger giving the maximum number of tau-leaping diagnostic messages to print.\n\n\nspecies_names\nOptional character vector of species names.\n\n\nenforce_do\nInteger vector controlling enforced discrete behaviour. Defaults to zero for all species.\n\n\nmethod\nJSF simulation method. Supported values include \"exact\", \"operator-splitting\", and \"tau-operator-splitting\".\n\n\nreturn_type\nOutput type. Either \"data.frame\" or \"JSFResult\"."
+  },
+  {
+    "objectID": "reference/jsf_simulate.html#value",
+    "href": "reference/jsf_simulate.html#value",
+    "title": "jsf_simulate",
+    "section": "Value",
+    "text": "Value\nIf return_type = \"data.frame\", a data frame with a time column and one column per species. If return_type = \"JSFResult\", a JSFResult object."
+  },
+  {
+    "objectID": "reference/jsf_simulate.html#description",
+    "href": "reference/jsf_simulate.html#description",
+    "title": "jsf_simulate",
+    "section": "Description",
+    "text": "Description\nThis is a general R wrapper around the Python jsf simulator. It accepts an initial state, a Python rate function, reactant and product stoichiometry matrices, and JSF configuration options."
+  },
+  {
+    "objectID": "reference/jsf_simulate.html#examples",
+    "href": "reference/jsf_simulate.html#examples",
+    "title": "jsf_simulate",
+    "section": "Examples",
+    "text": "Examples\n## Not run: \nlibrary(reticulate)\n\nrates_lv &lt;- reticulate::py_eval(\n  \"lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]\"\n)\n\nresult &lt;- jsf_simulate(\n  x0 = c(prey = 50, predator = 10),\n  rates = rates_lv,\n  reactant = matrix(\n    c(\n      1, 0,\n      0, 1,\n      1, 1\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  product = matrix(\n    c(\n      2, 0,\n      0, 0,\n      0, 2\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  do_disc = c(1, 1),\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = c(30, 30),\n  species_names = c(\"prey\", \"predator\"),\n  return_type = \"JSFResult\"\n)\n\nresult\nsummary(result)\nplot(result)\n\n## End(Not run)"
+  },
+  {
+    "objectID": "reference/jsf_available.html",
+    "href": "reference/jsf_available.html",
+    "title": "jsf_available",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/jsf_available.html#usage",
+    "href": "reference/jsf_available.html#usage",
+    "title": "jsf_available",
+    "section": "Usage",
+    "text": "Usage\njsf_available()"
+  },
+  {
+    "objectID": "reference/jsf_available.html#value",
+    "href": "reference/jsf_available.html#value",
+    "title": "jsf_available",
+    "section": "Value",
+    "text": "Value\nA single logical value. TRUE if jsf is available, otherwise FALSE."
+  },
+  {
+    "objectID": "reference/jsf_available.html#description",
+    "href": "reference/jsf_available.html#description",
+    "title": "jsf_available",
+    "section": "Description",
+    "text": "Description\nThis function checks whether the Python jsf module can be found by reticulate in the currently active Python environment."
+  },
+  {
+    "objectID": "reference/jsf_available.html#examples",
+    "href": "reference/jsf_available.html#examples",
+    "title": "jsf_available",
+    "section": "Examples",
+    "text": "Examples\nif (reticulate::py_available(initialize = FALSE)) {\n  jsf_available()\n}"
+  },
+  {
+    "objectID": "reference.html",
+    "href": "reference.html",
     "title": "Function reference",
     "section": "",
     "text": "All functions and classes exported by rjsf."
   },
   {
-    "objectID": "_qrtdown/reference.html#functions",
-    "href": "_qrtdown/reference.html#functions",
+    "objectID": "reference.html#functions",
+    "href": "reference.html#functions",
     "title": "Function reference",
     "section": "Functions",
     "text": "Functions\n\n\n\nFunction\nDescription\n\n\n\n\nas_jsf_result()\nConvert a JSF output data frame to a JSFResult object\n\n\njsf_available()\nCheck whether the Python jsf package is available\n\n\njsf_lotka_volterra()\nSimulate a Lotka-Volterra predator-prey model using JSF\n\n\njsf_simulate()\nSimulate a compartmental model using JSF\n\n\njsf_sir()\nSimulate an SIR epidemic model using JSF\n\n\nnew_jsf_result()\nCreate a JSFResult object"
@@ -82,6 +194,125 @@
     "title": "rjsf",
     "section": "Vignettes",
     "text": "Vignettes\nSee the getting started vignette for full Lotka-Volterra and SIR examples."
+  },
+  {
+    "objectID": "reference/as_jsf_result.html",
+    "href": "reference/as_jsf_result.html",
+    "title": "as_jsf_result",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/as_jsf_result.html#usage",
+    "href": "reference/as_jsf_result.html#usage",
+    "title": "as_jsf_result",
+    "section": "Usage",
+    "text": "Usage\nas_jsf_result(\n  x,\n  method = \"operator-splitting\",\n  config = list(),\n  species_names = NULL\n)"
+  },
+  {
+    "objectID": "reference/as_jsf_result.html#arguments",
+    "href": "reference/as_jsf_result.html#arguments",
+    "title": "as_jsf_result",
+    "section": "Arguments",
+    "text": "Arguments\n\n\n\n\n\n\n\nArgument\nDescription\n\n\n\n\nx\nData frame returned by jsf_simulate() or a model-specific wrapper. It must contain a time column.\n\n\nmethod\nJSF simulation method used.\n\n\nconfig\nList of simulation configuration values.\n\n\nspecies_names\nOptional character vector of species columns to include."
+  },
+  {
+    "objectID": "reference/as_jsf_result.html#value",
+    "href": "reference/as_jsf_result.html#value",
+    "title": "as_jsf_result",
+    "section": "Value",
+    "text": "Value\nA JSFResult object."
+  },
+  {
+    "objectID": "reference/as_jsf_result.html#examples",
+    "href": "reference/as_jsf_result.html#examples",
+    "title": "as_jsf_result",
+    "section": "Examples",
+    "text": "Examples\ndf &lt;- data.frame(\n  time = c(0, 0.1, 0.2),\n  S = c(990, 988, 985),\n  I = c(10, 12, 15),\n  R = c(0, 0, 0)\n)\n\nresult &lt;- as_jsf_result(\n  df,\n  config = list(model = \"SIR\", dt = 0.1)\n)\n\nresult\nsummary(result)"
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html",
+    "href": "reference/jsf_lotka_volterra.html",
+    "title": "jsf_lotka_volterra",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html#usage",
+    "href": "reference/jsf_lotka_volterra.html#usage",
+    "title": "jsf_lotka_volterra",
+    "section": "Usage",
+    "text": "Usage\njsf_lotka_volterra(\n  prey0 = 50,\n  predator0 = 10,\n  prey_birth = 2,\n  predation = 0.05,\n  predator_death = 1.5,\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = 30\n)"
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html#arguments",
+    "href": "reference/jsf_lotka_volterra.html#arguments",
+    "title": "jsf_lotka_volterra",
+    "section": "Arguments",
+    "text": "Arguments\n\n\n\nArgument\nDescription\n\n\n\n\nprey0\nInitial prey population.\n\n\npredator0\nInitial predator population.\n\n\nprey_birth\nPrey birth rate.\n\n\npredation\nPredation rate.\n\n\npredator_death\nPredator death rate.\n\n\nt_max\nFinal simulation time.\n\n\ndt\nTime step for the continuous/ODE part of JSF.\n\n\nswitching_threshold\nSwitching threshold for both species."
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html#value",
+    "href": "reference/jsf_lotka_volterra.html#value",
+    "title": "jsf_lotka_volterra",
+    "section": "Value",
+    "text": "Value\nA data frame with columns time, prey, and predator."
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html#description",
+    "href": "reference/jsf_lotka_volterra.html#description",
+    "title": "jsf_lotka_volterra",
+    "section": "Description",
+    "text": "Description\nThis function runs a simple Lotka-Volterra predator-prey model using the Python jsf package through reticulate."
+  },
+  {
+    "objectID": "reference/jsf_lotka_volterra.html#examples",
+    "href": "reference/jsf_lotka_volterra.html#examples",
+    "title": "jsf_lotka_volterra",
+    "section": "Examples",
+    "text": "Examples\nif (jsf_available()) {\n  result &lt;- jsf_lotka_volterra(\n    prey0 = 50,\n    predator0 = 10,\n    t_max = 1\n  )\n\n  head(result)\n}"
+  },
+  {
+    "objectID": "reference/jsf_sir.html",
+    "href": "reference/jsf_sir.html",
+    "title": "jsf_sir",
+    "section": "",
+    "text": "&lt; Back to Reference | View source"
+  },
+  {
+    "objectID": "reference/jsf_sir.html#usage",
+    "href": "reference/jsf_sir.html#usage",
+    "title": "jsf_sir",
+    "section": "Usage",
+    "text": "Usage\njsf_sir(\n  N = 1000,\n  I0 = 10,\n  beta = 0.5,\n  gamma = 0.1,\n  t_max = 60,\n  dt = 0.1,\n  switching_threshold_I = 10\n)"
+  },
+  {
+    "objectID": "reference/jsf_sir.html#arguments",
+    "href": "reference/jsf_sir.html#arguments",
+    "title": "jsf_sir",
+    "section": "Arguments",
+    "text": "Arguments\n\n\n\n\n\n\n\nArgument\nDescription\n\n\n\n\nN\nTotal population size.\n\n\nI0\nInitial infectious population.\n\n\nbeta\nInfection rate.\n\n\ngamma\nRecovery rate.\n\n\nt_max\nFinal simulation time.\n\n\ndt\nTime step for the continuous/ODE part of JSF.\n\n\nswitching_threshold_I\nSwitching threshold for the infectious compartment."
+  },
+  {
+    "objectID": "reference/jsf_sir.html#value",
+    "href": "reference/jsf_sir.html#value",
+    "title": "jsf_sir",
+    "section": "Value",
+    "text": "Value\nA data frame with columns time, S, I, and R."
+  },
+  {
+    "objectID": "reference/jsf_sir.html#description",
+    "href": "reference/jsf_sir.html#description",
+    "title": "jsf_sir",
+    "section": "Description",
+    "text": "Description\nThis function runs a simple SIR epidemic model using the Python jsf package through reticulate."
+  },
+  {
+    "objectID": "reference/jsf_sir.html#examples",
+    "href": "reference/jsf_sir.html#examples",
+    "title": "jsf_sir",
+    "section": "Examples",
+    "text": "Examples\nif (jsf_available()) {\n  result &lt;- jsf_sir(\n    N = 1000,\n    I0 = 10,\n    beta = 0.5,\n    gamma = 0.1,\n    t_max = 1,\n    dt = 0.1,\n    switching_threshold_I = 10\n  )\n\n  head(result)\n}"
   },
   {
     "objectID": "_qrtdown/articles.html",
