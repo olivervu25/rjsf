@@ -28,3 +28,7 @@
 ^\.github$
 ^cran-comments\.md$
 ^README\.qmd$
+
+# qrtdown
+^reference$
+^reference\.qmd$
