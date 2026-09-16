@@ -36,3 +36,19 @@ A data frame with columns \code{time}, \code{S}, \code{I}, and \code{R}.
 This function runs a simple SIR epidemic model using the Python \code{jsf}
 package through \code{reticulate}.
 }
+\examples{
+if (jsf_available()) {
+  result <- jsf_sir(
+    N = 1000,
+    I0 = 10,
+    beta = 0.5,
+    gamma = 0.1,
+    t_max = 1,
+    dt = 0.1,
+    switching_threshold_I = 10
+  )
+
+  head(result)
+}
+
+}

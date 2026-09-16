@@ -13,3 +13,9 @@ A single logical value. \code{TRUE} if \code{jsf} is available, otherwise \code{
 This function checks whether the Python \code{jsf} module can be found by
 \code{reticulate} in the currently active Python environment.
 }
+\examples{
+if (reticulate::py_available(initialize = FALSE)) {
+  jsf_available()
+}
+
+}

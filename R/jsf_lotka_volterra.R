@@ -13,18 +13,37 @@
 #' @param switching_threshold Switching threshold for both species.
 #'
 #' @return A data frame with columns `time`, `prey`, and `predator`.
+#'
+#' @examples
+#' if (jsf_available()) {
+#'   result <- jsf_lotka_volterra(
+#'     prey0 = 50,
+#'     predator0 = 10,
+#'     t_max = 1
+#'   )
+#'
+#'   head(result)
+#' }
+#'
 #' @export
-
 jsf_lotka_volterra <- function(
-  prey0 = 50,
-  predator0 = 10,
-  prey_birth = 2.0,
-  predation = 0.05,
-  predator_death = 1.5,
-  t_max = 10,
-  dt = 0.01,
-  switching_threshold = 30
-){
+    prey0 = 50,
+    predator0 = 10,
+    prey_birth = 2.0,
+    predation = 0.05,
+    predator_death = 1.5,
+    t_max = 10,
+    dt = 0.01,
+    switching_threshold = 30
+) {
+  if (!jsf_available()) {
+    stop(
+      "Python package `jsf` is not available. ",
+      "Check your reticulate Python environment.",
+      call. = FALSE
+    )
+  }
+
   jsf <- reticulate::import("jsf")
 
   x0 <- list(
@@ -49,7 +68,7 @@ jsf_lotka_volterra <- function(
     list(2L, 0L),
     list(0L, 0L),
     list(0L, 2L)
-    )
+  )
 
   nu <- list(
     list(1L, 0L),
@@ -62,7 +81,7 @@ jsf_lotka_volterra <- function(
     DoDisc = list(1L, 1L),
     nuReactant = reactant,
     nuProduct = product
-    )
+  )
 
   opts <- list(
     EnforceDo = list(0L, 0L),
@@ -80,18 +99,6 @@ jsf_lotka_volterra <- function(
     t_max = as.numeric(t_max),
     config = opts,
     method = "operator-splitting"
-  )
-
-  data.frame(
-    time = unlist(sim[[2]]),
-    prey = unlist(sim[[1]][[1]]),
-    predator = unlist(sim[[1]][[2]])
-    )
-
-  out <- data.frame(
-    time = unlist(sim[[2]]),
-    prey = unlist(sim[[1]][[1]]),
-    predator = unlist(sim[[1]][[2]])
   )
 
   out <- data.frame(

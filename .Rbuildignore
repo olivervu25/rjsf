@@ -26,3 +26,5 @@
 ^__init__\.py$
 ^\.github$
 ^\.github$
+^cran-comments\.md$
+^README\.qmd$

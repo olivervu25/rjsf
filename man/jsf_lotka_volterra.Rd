@@ -39,3 +39,15 @@ A data frame with columns \code{time}, \code{prey}, and \code{predator}.
 This function runs a simple Lotka-Volterra predator-prey model using the
 Python \code{jsf} package through \code{reticulate}.
 }
+\examples{
+if (jsf_available()) {
+  result <- jsf_lotka_volterra(
+    prey0 = 50,
+    predator0 = 10,
+    t_max = 1
+  )
+
+  head(result)
+}
+
+}
