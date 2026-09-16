@@ -104,9 +104,9 @@ If it returns `FALSE`, check that:
 * it is installed in the environment currently used by `reticulate`; and
 * `reticulate::py_config()` reports the expected Python executable.
 
-## Lotka–Volterra predator–prey model
+## Lotka-Volterra predator-prey model
 
-The Lotka–Volterra model describes interactions between two species:
+The Lotka-Volterra model describes interactions between two species:
 
 * `prey`;
 * `predator`.
@@ -114,7 +114,7 @@ The Lotka–Volterra model describes interactions between two species:
 The model contains three reactions:
 
 1. Prey birth: `Prey -> 2 Prey`
-2. Predator death: `Predator -> ∅`
+2. Predator death: `Predator -> NULL`
 3. Predation: `Prey + Predator -> 2 Predator`
 
 The state vector is:
@@ -185,7 +185,7 @@ For this model, the net state changes are:
 
 ```text
 Prey -> 2 Prey                 [+1,  0]
-Predator -> ∅                  [ 0, -1]
+Predator -> NULL                  [ 0, -1]
 Prey + Predator -> 2 Predator  [-1, +1]
 ```
 
