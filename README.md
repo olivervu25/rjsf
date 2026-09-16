@@ -177,7 +177,7 @@ plot(result)
 
 ## Vignettes
 
-See the [Getting started with rjsf](https://olivervu25.github.io/rjsf/articles/getting-started.html) vignette for complete Lotka-Volterra and SIR examples, including model specification, Python setup, simulation, and result inspection.
+See the [Getting started with rjsf](vignettes/getting-started.qmd) vignette for complete Lotka-Volterra and SIR examples, including model specification, Python setup, simulation, and result inspection.
 
 ## Citation
 

@@ -1,5 +1,5 @@
 Package: rjsf
-Title: R Interface to Jump-Switch-Flow Simulation
+Title: R Interface to 'Jump-Switch-Flow' Simulation
 Version: 0.1.0
 Authors@R:
     c(
@@ -25,7 +25,8 @@ Description: Provides an R interface to Jump-Switch-Flow ('JSF'), a hybrid
     stochastic jump dynamics at low population sizes with deterministic flow
     dynamics at high population sizes. Simulations are performed using the
     Python 'jsf' backend through 'reticulate', with structured R outputs for
-    inspection, summarization, and plotting.
+    inspection, summarization, and plotting. The underlying methodology is
+    described in Germano et al. (2026) <doi:10.1007/s00285-026-02409-y>.
 License: MIT + file LICENSE
 URL: https://olivervu25.github.io/rjsf/, https://github.com/olivervu25/rjsf
 BugReports: https://github.com/olivervu25/rjsf/issues
