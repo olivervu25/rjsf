@@ -42,8 +42,7 @@ bibentry(
   year = "2026",
   volume = "92",
   pages = "93",
-  doi = "10.1007/s00285-026-02409-y",
-  url = "https://doi.org/10.1007/s00285-026-02409-y"
+  doi = "10.1007/s00285-026-02409-y"
 )
 
 citFooter(
