@@ -2,7 +2,7 @@
 title: "jsf_lotka_volterra"
 ---
 
-[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_lotka_volterra.R#L18)
+[< Back to Reference](../reference.qmd) | [View source](https://olivervu25.github.io/rjsf//src/branch/main/R/jsf_lotka_volterra.R#L29)
 
 # `jsf_lotka_volterra()`
 
@@ -44,4 +44,18 @@ A data frame with columns `time`, `prey`, and `predator`.
 
 This function runs a simple Lotka-Volterra predator-prey model using the
 Python `jsf` package through `reticulate`.
+
+## Examples
+
+```r
+if (jsf_available()) {
+  result <- jsf_lotka_volterra(
+    prey0 = 50,
+    predator0 = 10,
+    t_max = 1
+  )
+
+  head(result)
+}
+```
 
