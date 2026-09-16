@@ -20,7 +20,7 @@ Authors@R:
         role = "aut"
       )
     )
-Description: Provides an R interface to Jump-Switch-Flow ('JSF'), a hybrid
+Description: An R interface to Jump-Switch-Flow ('JSF'), a hybrid
     simulation framework for compartmental reaction models that combines
     stochastic jump dynamics at low population sizes with deterministic flow
     dynamics at high population sizes. Simulations are performed using the
