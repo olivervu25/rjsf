@@ -1,24 +1,34 @@
-# rjsf 
+# rjsf
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-`rjsf` provides an R interface to the Python `jsf` package for Jump-Switch-Flow simulation.
+`rjsf` provides an R interface to Jump-Switch-Flow (JSF), a hybrid simulation framework for compartmental models that combines stochastic jump dynamics at low populations with deterministic flow dynamics at high populations.
 
-The main function is `jsf_simulate()`, which lets users define compartmental reaction models in R, call the Python `jsf` backend through `reticulate`, and return simulation output as either a regular `data.frame` or a structured `JSFResult` object.
+**Important:** `rjsf` is an R interface; running simulations requires the Python Jump-Switch-Flow backend to be installed and accessible through `reticulate`.
+
+The main function is `jsf_simulate()`, which lets users define compartmental reaction models in R, run simulations using the Python `jsf` backend, and return the output as either a regular `data.frame` or a structured `JSFResult` object.
 
 ## Installation
 
-You can install the development version of `rjsf` from GitHub with:
+Once available on CRAN, you can install the released version of `rjsf` with:
+
+```r
+install.packages("rjsf")
+```
+
+You can install the development version from GitHub with:
 
 ```r
 # install.packages("pak")
 pak::pak("olivervu25/rjsf")
 ```
 
+Running simulations also requires the Python Jump-Switch-Flow backend. See [Python setup](#python-setup) below.
+
 ## Python setup
 
-`rjsf` uses `reticulate` to call the Python `jsf` package. This means Python `jsf` must be installed in the same Python environment that `reticulate` is using.
+`rjsf` uses `reticulate` to communicate with the Python `jsf` package. The Python backend must therefore be installed in the same Python environment used by `reticulate`.
 
 A recommended setup is to create a local virtual environment:
 
@@ -28,7 +38,7 @@ source .venv/bin/activate
 
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install numpy scipy pandas matplotlib python-libsbml
-python -m pip install git+https://github.com/DGermano8/jsf.git
+python -m pip install git+https://github.com/DGermano8/jsf
 ```
 
 Then in R, point `reticulate` to that environment:
@@ -40,7 +50,7 @@ library(reticulate)
 py_config()
 ```
 
-Check that Python `jsf` is available:
+Check that the Python `jsf` backend is available:
 
 ```r
 library(rjsf)
@@ -48,15 +58,15 @@ library(rjsf)
 jsf_available()
 ```
 
-This should return:
+A correctly configured environment should return:
 
-```r
+```text
 [1] TRUE
 ```
 
 ## Alternative setup using reticulate
 
-You can also install the Python dependencies from R using `reticulate`:
+You can also create and configure the Python environment directly from R:
 
 ```r
 library(reticulate)
@@ -64,13 +74,19 @@ library(reticulate)
 virtualenv_create("rjsf-env")
 
 py_install(
-  packages = c("numpy", "scipy", "pandas", "matplotlib", "python-libsbml"),
+  packages = c(
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "python-libsbml"
+  ),
   envname = "rjsf-env",
   method = "virtualenv"
 )
 
 py_install(
-  packages = "git+https://github.com/DGermano8/jsf.git",
+  packages = "git+https://github.com/DGermano8/jsf",
   envname = "rjsf-env",
   method = "virtualenv",
   pip = TRUE
@@ -88,6 +104,8 @@ jsf_available()
 ```
 
 ## Quick example
+
+The following example simulates a Lotka-Volterra predator-prey system and returns a structured `JSFResult` object.
 
 ```r
 library(rjsf)
@@ -131,6 +149,10 @@ summary(result)
 plot(result)
 ```
 
+The simulated prey and predator trajectories can be visualised directly from the `JSFResult` object:
+
+![Lotka-Volterra prey and predator trajectories generated with rjsf](man/figures/lotka-volterra-example.png)
+
 ## Output types
 
 `jsf_simulate()` can return either a regular data frame:
@@ -145,7 +167,7 @@ or a structured `JSFResult` object:
 result <- jsf_simulate(..., return_type = "JSFResult")
 ```
 
-A `JSFResult` stores simulation trajectories and metadata, and supports:
+A `JSFResult` stores simulation trajectories and associated metadata and supports standard methods including:
 
 ```r
 print(result)
@@ -155,4 +177,18 @@ plot(result)
 
 ## Vignettes
 
-See the getting started vignette for full Lotka-Volterra and SIR examples.
+See the [Getting started with rjsf](https://olivervu25.github.io/rjsf/articles/getting-started.html) vignette for complete Lotka-Volterra and SIR examples, including model specification, Python setup, simulation, and result inspection.
+
+## Citation
+
+If you use `rjsf` in your work, please cite both the `rjsf` package and the original Jump-Switch-Flow methodology.
+
+You can obtain the recommended citations in R with:
+
+```r
+citation("rjsf")
+```
+
+The upstream Python implementation of Jump-Switch-Flow is available at:
+
+https://github.com/DGermano8/jsf
