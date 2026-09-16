@@ -177,7 +177,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#set-up-python-jsf" id="toc-set-up-python-jsf" class="nav-link" data-scroll-target="#set-up-python-jsf">Set up Python <code>jsf</code></a></li>
   <li><a href="#check-python-jsf" id="toc-check-python-jsf" class="nav-link" data-scroll-target="#check-python-jsf">Check Python <code>jsf</code></a></li>
-  <li><a href="#lotkavolterra-predatorprey-model" id="toc-lotkavolterra-predatorprey-model" class="nav-link" data-scroll-target="#lotkavolterra-predatorprey-model">Lotka–Volterra predator–prey model</a>
+  <li><a href="#lotka-volterra-predator-prey-model" id="toc-lotka-volterra-predator-prey-model" class="nav-link" data-scroll-target="#lotka-volterra-predator-prey-model">Lotka-Volterra predator-prey model</a>
   <ul class="collapse">
   <li><a href="#define-the-rate-function" id="toc-define-the-rate-function" class="nav-link" data-scroll-target="#define-the-rate-function">Define the rate function</a></li>
   <li><a href="#define-the-stoichiometry" id="toc-define-the-stoichiometry" class="nav-link" data-scroll-target="#define-the-stoichiometry">Define the stoichiometry</a></li>
@@ -297,9 +297,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>reticulate::py_config()</code> reports the expected Python executable.</li>
 </ul>
 </section>
-<section id="lotkavolterra-predatorprey-model" class="level2">
-<h2 class="anchored" data-anchor-id="lotkavolterra-predatorprey-model">Lotka–Volterra predator–prey model</h2>
-<p>The Lotka–Volterra model describes interactions between two species:</p>
+<section id="lotka-volterra-predator-prey-model" class="level2">
+<h2 class="anchored" data-anchor-id="lotka-volterra-predator-prey-model">Lotka-Volterra predator-prey model</h2>
+<p>The Lotka-Volterra model describes interactions between two species:</p>
 <ul>
 <li><code>prey</code>;</li>
 <li><code>predator</code>.</li>
@@ -307,7 +307,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The model contains three reactions:</p>
 <ol type="1">
 <li>Prey birth: <code>Prey -&gt; 2 Prey</code></li>
-<li>Predator death: <code>Predator -&gt; ∅</code></li>
+<li>Predator death: <code>Predator -&gt; NULL</code></li>
 <li>Predation: <code>Prey + Predator -&gt; 2 Predator</code></li>
 </ol>
 <p>The state vector is:</p>
@@ -361,7 +361,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre class="text"><code>nu = product - reactant</code></pre>
 <p>For this model, the net state changes are:</p>
 <pre class="text"><code>Prey -&gt; 2 Prey                 [+1,  0]
-Predator -&gt; ∅                  [ 0, -1]
+Predator -&gt; NULL                  [ 0, -1]
 Prey + Predator -&gt; 2 Predator  [-1, +1]</code></pre>
 </section>
 <section id="run-the-simulation" class="level3">
