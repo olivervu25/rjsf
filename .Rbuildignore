@@ -31,3 +31,4 @@
 # Build artefacts
 ^doc$
 ^Meta$
+^CRAN-SUBMISSION$
