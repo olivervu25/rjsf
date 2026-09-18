@@ -95,7 +95,7 @@
     "href": "reference/jsf_simulate.html#examples",
     "title": "jsf_simulate",
     "section": "Examples",
-    "text": "Examples\n## Not run: \nlibrary(reticulate)\n\nrates_lv &lt;- reticulate::py_eval(\n  \"lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]\"\n)\n\nresult &lt;- jsf_simulate(\n  x0 = c(prey = 50, predator = 10),\n  rates = rates_lv,\n  reactant = matrix(\n    c(\n      1, 0,\n      0, 1,\n      1, 1\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  product = matrix(\n    c(\n      2, 0,\n      0, 0,\n      0, 2\n    ),\n    ncol = 2,\n    byrow = TRUE\n  ),\n  do_disc = c(1, 1),\n  t_max = 10,\n  dt = 0.01,\n  switching_threshold = c(30, 30),\n  species_names = c(\"prey\", \"predator\"),\n  return_type = \"JSFResult\"\n)\n\nresult\nsummary(result)\nplot(result)\n\n## End(Not run)"
+    "text": "Examples\nif (interactive() && jsf_available()) {\n  rates_lv &lt;- reticulate::py_eval(\n    \"lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]\"\n  )\n\n  result &lt;- jsf_simulate(\n    x0 = c(prey = 50, predator = 10),\n    rates = rates_lv,\n    reactant = matrix(\n      c(\n        1, 0,\n        0, 1,\n        1, 1\n      ),\n      ncol = 2,\n      byrow = TRUE\n    ),\n    product = matrix(\n      c(\n        2, 0,\n        0, 0,\n        0, 2\n      ),\n      ncol = 2,\n      byrow = TRUE\n    ),\n    do_disc = c(1, 1),\n    t_max = 1,\n    dt = 0.01,\n    switching_threshold = c(30, 30),\n    species_names = c(\"prey\", \"predator\"),\n    return_type = \"JSFResult\"\n  )\n\n  result\n  summary(result)\n  plot(result)\n}"
   },
   {
     "objectID": "reference/jsf_available.html",
@@ -270,7 +270,7 @@
     "href": "reference/jsf_lotka_volterra.html#examples",
     "title": "jsf_lotka_volterra",
     "section": "Examples",
-    "text": "Examples\nif (jsf_available()) {\n  result &lt;- jsf_lotka_volterra(\n    prey0 = 50,\n    predator0 = 10,\n    t_max = 1\n  )\n\n  head(result)\n}"
+    "text": "Examples\nif (interactive() && jsf_available()) {\n    result &lt;- jsf_lotka_volterra(\n    prey0 = 50,\n    predator0 = 10,\n    t_max = 1\n  )\n\n  head(result)\n}"
   },
   {
     "objectID": "reference/jsf_sir.html",
@@ -312,7 +312,7 @@
     "href": "reference/jsf_sir.html#examples",
     "title": "jsf_sir",
     "section": "Examples",
-    "text": "Examples\nif (jsf_available()) {\n  result &lt;- jsf_sir(\n    N = 1000,\n    I0 = 10,\n    beta = 0.5,\n    gamma = 0.1,\n    t_max = 1,\n    dt = 0.1,\n    switching_threshold_I = 10\n  )\n\n  head(result)\n}"
+    "text": "Examples\nif (interactive() && jsf_available()) {\n  result &lt;- jsf_sir(\n    N = 1000,\n    I0 = 10,\n    beta = 0.5,\n    gamma = 0.1,\n    t_max = 1,\n    dt = 0.1,\n    switching_threshold_I = 10\n  )\n\n  head(result)\n}"
   },
   {
     "objectID": "_qrtdown/articles.html",
