@@ -37,7 +37,7 @@ This function runs a simple SIR epidemic model using the Python \code{jsf}
 package through \code{reticulate}.
 }
 \examples{
-if (jsf_available()) {
+if (interactive() && jsf_available()) {
   result <- jsf_sir(
     N = 1000,
     I0 = 10,

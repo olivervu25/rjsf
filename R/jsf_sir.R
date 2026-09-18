@@ -14,7 +14,7 @@
 #' @return A data frame with columns `time`, `S`, `I`, and `R`.
 #'
 #' @examples
-#' if (jsf_available()) {
+#' if (interactive() && jsf_available()) {
 #'   result <- jsf_sir(
 #'     N = 1000,
 #'     I0 = 10,

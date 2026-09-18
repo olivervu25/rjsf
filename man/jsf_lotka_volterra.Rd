@@ -40,8 +40,8 @@ This function runs a simple Lotka-Volterra predator-prey model using the
 Python \code{jsf} package through \code{reticulate}.
 }
 \examples{
-if (jsf_available()) {
-  result <- jsf_lotka_volterra(
+if (interactive() && jsf_available()) {
+    result <- jsf_lotka_volterra(
     prey0 = 50,
     predator0 = 10,
     t_max = 1

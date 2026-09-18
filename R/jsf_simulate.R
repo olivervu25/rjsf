@@ -39,45 +39,43 @@
 #'   and one column per species. If `return_type = "JSFResult"`, a `JSFResult`
 #'   object.
 #' @examples
-#' \dontrun{
-#' library(reticulate)
+#' if (interactive() && jsf_available()) {
+#'   rates_lv <- reticulate::py_eval(
+#'     "lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]"
+#'   )
 #'
-#' rates_lv <- reticulate::py_eval(
-#'   "lambda x, t: [2.0 * x[0], 1.5 * x[1], 0.05 * x[0] * x[1]]"
-#' )
-#'
-#' result <- jsf_simulate(
-#'   x0 = c(prey = 50, predator = 10),
-#'   rates = rates_lv,
-#'   reactant = matrix(
-#'     c(
-#'       1, 0,
-#'       0, 1,
-#'       1, 1
+#'   result <- jsf_simulate(
+#'     x0 = c(prey = 50, predator = 10),
+#'     rates = rates_lv,
+#'     reactant = matrix(
+#'       c(
+#'         1, 0,
+#'         0, 1,
+#'         1, 1
+#'       ),
+#'       ncol = 2,
+#'       byrow = TRUE
 #'     ),
-#'     ncol = 2,
-#'     byrow = TRUE
-#'   ),
-#'   product = matrix(
-#'     c(
-#'       2, 0,
-#'       0, 0,
-#'       0, 2
+#'     product = matrix(
+#'       c(
+#'         2, 0,
+#'         0, 0,
+#'         0, 2
+#'       ),
+#'       ncol = 2,
+#'       byrow = TRUE
 #'     ),
-#'     ncol = 2,
-#'     byrow = TRUE
-#'   ),
-#'   do_disc = c(1, 1),
-#'   t_max = 10,
-#'   dt = 0.01,
-#'   switching_threshold = c(30, 30),
-#'   species_names = c("prey", "predator"),
-#'   return_type = "JSFResult"
-#' )
+#'     do_disc = c(1, 1),
+#'     t_max = 1,
+#'     dt = 0.01,
+#'     switching_threshold = c(30, 30),
+#'     species_names = c("prey", "predator"),
+#'     return_type = "JSFResult"
+#'   )
 #'
-#' result
-#' summary(result)
-#' plot(result)
+#'   result
+#'   summary(result)
+#'   plot(result)
 #' }
 #' @export
 jsf_simulate <- function(

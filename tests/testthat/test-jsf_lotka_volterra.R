@@ -1,5 +1,7 @@
 test_that("jsf_lotka_volterra returns valid output", {
 
+  skip_on_cran()
+
   skip_if_not(
     jsf_available(),
     "Python Jump-Switch-Flow package is not available"

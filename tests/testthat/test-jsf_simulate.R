@@ -1,5 +1,7 @@
 test_that("jsf_simulate works for Lotka-Volterra", {
 
+  skip_on_cran()
+
   skip_if_not(
     jsf_available(),
     "Python Jump-Switch-Flow package is not available"
@@ -46,6 +48,8 @@ test_that("jsf_simulate works for Lotka-Volterra", {
 })
 
 test_that("jsf_simulate works for SIR", {
+
+  skip_on_cran()
 
   skip_if_not(
     jsf_available(),

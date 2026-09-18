@@ -15,8 +15,8 @@
 #' @return A data frame with columns `time`, `prey`, and `predator`.
 #'
 #' @examples
-#' if (jsf_available()) {
-#'   result <- jsf_lotka_volterra(
+#' if (interactive() && jsf_available()) {
+#'     result <- jsf_lotka_volterra(
 #'     prey0 = 50,
 #'     predator0 = 10,
 #'     t_max = 1
