@@ -9,6 +9,10 @@
 
 The main function is `jsf_simulate()`, which lets users define compartmental reaction models in R, run simulations using the Python `jsf` backend, and return the output as either a regular `data.frame` or a structured `JSFResult` object.
 
+## Google Summer of Code
+
+Development of `rjsf` commenced as part of the [**Google Summer of Code 2026 (GSoC 2026)**](https://summerofcode.withgoogle.com/) program.
+
 ## Installation
 
 Once available on CRAN, you can install the released version of `rjsf` with:
