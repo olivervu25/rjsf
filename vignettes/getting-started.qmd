@@ -44,37 +44,12 @@ plot(result)
 
 ## Set up Python `jsf`
 
-`rjsf` uses `reticulate` to communicate with Python. The Python `jsf` package must therefore be installed in the same Python environment used by `reticulate`.
+`rjsf` uses `reticulate` to communicate with Python. The Python `jsf`
+package must therefore already be installed in the Python environment used
+by `reticulate`.
 
-One option is to install the dependencies from R:
-
-```{r}
-install.packages("reticulate")
-
-reticulate::virtualenv_create("rjsf-env")
-
-reticulate::py_install(
-  packages = c(
-    "numpy",
-    "python-libsbml",
-    "ipykernel"
-  ),
-  envname = "rjsf-env",
-  method = "virtualenv"
-)
-
-reticulate::py_install(
-  packages = "git+https://github.com/DGermano8/jsf",
-  envname = "rjsf-env",
-  method = "virtualenv",
-  pip = TRUE
-)
-
-reticulate::use_virtualenv(
-  "rjsf-env",
-  required = TRUE
-)
-```
+Installation instructions for the Python dependencies are provided in the
+package README.
 
 You can inspect the Python environment selected by `reticulate` with:
 
