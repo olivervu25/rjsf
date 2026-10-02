@@ -340,7 +340,7 @@
     "href": "vignettes/articles/getting-started.html#set-up-python-jsf",
     "title": "Getting started with rjsf",
     "section": "Set up Python jsf",
-    "text": "Set up Python jsf\nrjsf uses reticulate to communicate with Python. The Python jsf package must therefore be installed in the same Python environment used by reticulate.\nOne option is to install the dependencies from R:\n\ninstall.packages(\"reticulate\")\n\nreticulate::virtualenv_create(\"rjsf-env\")\n\nreticulate::py_install(\n  packages = c(\n    \"numpy\",\n    \"python-libsbml\",\n    \"ipykernel\"\n  ),\n  envname = \"rjsf-env\",\n  method = \"virtualenv\"\n)\n\nreticulate::py_install(\n  packages = \"git+https://github.com/DGermano8/jsf.git\",\n  envname = \"rjsf-env\",\n  method = \"virtualenv\",\n  pip = TRUE\n)\n\nreticulate::use_virtualenv(\n  \"rjsf-env\",\n  required = TRUE\n)\n\nYou can inspect the Python environment selected by reticulate with:\n\nreticulate::py_config()"
+    "text": "Set up Python jsf\nrjsf uses reticulate to communicate with Python. The Python jsf package must therefore already be installed in the Python environment used by reticulate.\nInstallation instructions for the Python dependencies are provided in the package README.\nYou can inspect the Python environment selected by reticulate with:\n\nreticulate::py_config()"
   },
   {
     "objectID": "vignettes/articles/getting-started.html#check-python-jsf",
