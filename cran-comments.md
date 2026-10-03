@@ -2,11 +2,12 @@
 
 This is a resubmission. In this version I have:
 
-* Reworded the DESCRIPTION to address the spell-check NOTE.
-* Prevented examples requiring the external Python `jsf` backend from
-  initializing Python during CRAN checks.
-* Skipped Python-dependent integration tests on CRAN to avoid excessive
-  CPU usage during checks.
+* Corrected the formatting of software, package names, and acronyms in
+  DESCRIPTION.
+* Added the authors and year to the DOI reference in DESCRIPTION.
+* Removed software and package installation code from the vignette.
+* Kept Python-dependent examples and tests from installing the external
+  Python `jsf` backend during checks.
 
 The abbreviation JSF refers to Jump-Switch-Flow.
 
@@ -16,9 +17,17 @@ Germano et al. (2026) <doi:10.1007/s00285-026-02409-y>.
 
 ## R CMD check results
 
+### win-builder R-devel
+
 0 errors | 0 warnings | 1 note
 
-* The remaining local NOTE is:
+* New submission / spell-check note for terms including "Germano", "JSF",
+  and "et al.".
 
-  checking for future file timestamps ... NOTE
-  unable to verify current time
+### Local macOS check
+
+0 errors | 0 warnings | 3 notes
+
+* New submission.
+* Unable to verify current time.
+* HTML manual validation warnings generated during the local check.
